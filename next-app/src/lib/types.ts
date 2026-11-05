@@ -29,6 +29,7 @@ export interface PlayerProfile {
   losses: number;
   draws: number;
   lastDailyBonusAt?: number;
+  adminUpdatedAt?: number;
   history: GameHistoryRecord[];
   updatedAt: number;
 }
@@ -42,6 +43,7 @@ export interface LeaderboardEntry {
   losses: number;
   draws: number;
   lastDailyBonusAt?: number;
+  adminUpdatedAt?: number;
   updatedAt: number;
 }
 

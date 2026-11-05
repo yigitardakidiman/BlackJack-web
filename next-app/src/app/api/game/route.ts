@@ -166,12 +166,22 @@ export async function POST(req: NextRequest) {
         avatar,
         chipChange,
         outcome,
+        newChips,
+        wins,
+        losses,
+        draws,
+        clientAdminUpdatedAt,
       }: {
         playerId: string;
         nickname?: string;
         avatar?: string;
         chipChange: number;
         outcome: "win" | "loss" | "push";
+        newChips?: number;
+        wins?: number;
+        losses?: number;
+        draws?: number;
+        clientAdminUpdatedAt?: number;
       } = body;
 
       if (!playerId) {
@@ -187,22 +197,45 @@ export async function POST(req: NextRequest) {
           id: playerId,
           nickname: nickname || "Oyuncu",
           avatar: avatar || "🎰",
-          chips: 1000,
-          wins: 0,
-          losses: 0,
-          draws: 0,
+          chips:
+            typeof newChips === "number"
+              ? Math.max(0, newChips)
+              : Math.max(0, 1000 + Number(chipChange || 0)),
+          wins: typeof wins === "number" ? wins : outcome === "win" ? 1 : 0,
+          losses:
+            typeof losses === "number" ? losses : outcome === "loss" ? 1 : 0,
+          draws: typeof draws === "number" ? draws : outcome === "push" ? 1 : 0,
           updatedAt: Date.now(),
         };
         store.leaderboard.set(playerId, entry);
-      }
+      } else {
+        if (nickname) entry.nickname = nickname;
+        if (avatar) entry.avatar = avatar;
 
-      if (nickname) entry.nickname = nickname;
-      if (avatar) entry.avatar = avatar;
-      entry.chips = Math.max(0, entry.chips + Number(chipChange || 0));
-      if (outcome === "win") entry.wins += 1;
-      else if (outcome === "loss") entry.losses += 1;
-      else entry.draws += 1;
-      entry.updatedAt = Date.now();
+        const adminChangedWhilePlaying =
+          (entry.adminUpdatedAt ?? 0) > (clientAdminUpdatedAt ?? 0);
+
+        if (adminChangedWhilePlaying) {
+          entry.chips = Math.max(0, entry.chips + Number(chipChange || 0));
+          if (outcome === "win") entry.wins += 1;
+          else if (outcome === "loss") entry.losses += 1;
+          else entry.draws += 1;
+        } else {
+          entry.chips =
+            typeof newChips === "number"
+              ? Math.max(0, newChips)
+              : Math.max(0, entry.chips + Number(chipChange || 0));
+          if (typeof wins === "number") entry.wins = wins;
+          else if (outcome === "win") entry.wins += 1;
+
+          if (typeof losses === "number") entry.losses = losses;
+          else if (outcome === "loss") entry.losses += 1;
+
+          if (typeof draws === "number") entry.draws = draws;
+          else if (outcome === "push") entry.draws += 1;
+        }
+        entry.updatedAt = Date.now();
+      }
 
       syncPlayerChipsInRooms(store, playerId, entry.chips);
 
@@ -368,6 +401,7 @@ export async function POST(req: NextRequest) {
         entry.lastDailyBonusAt = undefined;
       }
 
+      entry.adminUpdatedAt = Date.now();
       entry.updatedAt = Date.now();
       syncPlayerChipsInRooms(store, targetPlayerId, entry.chips);
 

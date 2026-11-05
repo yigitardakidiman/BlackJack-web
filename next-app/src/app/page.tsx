@@ -210,7 +210,10 @@ export default function RoyalCasinoApp() {
     }
   }, []);
 
+  const profileRef = useRef<PlayerProfile | null>(null);
+
   const persistLocalProfile = useCallback((next: PlayerProfile) => {
+    profileRef.current = next;
     setProfile(next);
     if (isSessionGuestRef.current) {
       sessionStorage.setItem(
@@ -233,7 +236,7 @@ export default function RoyalCasinoApp() {
         .then((r) => r.json())
         .then((d) => {
           if (d.leaderboard) setLeaderboard(d.leaderboard);
-          if (d.me) {
+          if (d.me && (d.me.adminUpdatedAt ?? 0) > (next.adminUpdatedAt ?? 0)) {
             persistLocalProfile({
               ...next,
               chips: d.me.chips,
@@ -241,6 +244,7 @@ export default function RoyalCasinoApp() {
               losses: d.me.losses,
               draws: d.me.draws,
               lastDailyBonusAt: d.me.lastDailyBonusAt,
+              adminUpdatedAt: d.me.adminUpdatedAt,
             });
           }
         })
@@ -252,6 +256,11 @@ export default function RoyalCasinoApp() {
   const commitGameResultToServer = useCallback(
     (nextLocal: PlayerProfile, netChipChange: number, outcome: GameOutcome) => {
       persistLocalProfile(nextLocal);
+      if (netChipChange > 0) {
+        notifyToast(
+          `🎉 +${netChipChange} Çip kazandınız! Yeni Bakiyeniz: ${nextLocal.chips.toLocaleString("tr-TR")} Çip`
+        );
+      }
       fetch("/api/game", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -262,6 +271,11 @@ export default function RoyalCasinoApp() {
           avatar: nextLocal.avatar,
           chipChange: netChipChange,
           outcome,
+          newChips: nextLocal.chips,
+          wins: nextLocal.wins,
+          losses: nextLocal.losses,
+          draws: nextLocal.draws,
+          clientAdminUpdatedAt: nextLocal.adminUpdatedAt,
         }),
       })
         .then((r) => r.json())
@@ -275,6 +289,7 @@ export default function RoyalCasinoApp() {
               losses: d.me.losses,
               draws: d.me.draws,
               lastDailyBonusAt: d.me.lastDailyBonusAt,
+              adminUpdatedAt: d.me.adminUpdatedAt,
             });
           }
         })
@@ -298,13 +313,14 @@ export default function RoyalCasinoApp() {
       resultText: string,
       opponentName?: string
     ) => {
-      if (!profile) return;
+      const current = profileRef.current || profile;
+      if (!current) return;
       const next: PlayerProfile = {
-        ...profile,
-        chips: Math.max(0, profile.chips + chipDeltaFromInitialLock),
-        wins: profile.wins + (outcome === "win" ? 1 : 0),
-        losses: profile.losses + (outcome === "loss" ? 1 : 0),
-        draws: profile.draws + (outcome === "push" ? 1 : 0),
+        ...current,
+        chips: Math.max(0, current.chips + chipDeltaFromInitialLock),
+        wins: current.wins + (outcome === "win" ? 1 : 0),
+        losses: current.losses + (outcome === "loss" ? 1 : 0),
+        draws: current.draws + (outcome === "push" ? 1 : 0),
         updatedAt: Date.now(),
         history: [
           {
@@ -323,7 +339,7 @@ export default function RoyalCasinoApp() {
             }),
             opponentName,
           },
-          ...profile.history,
+          ...current.history,
         ].slice(0, 25),
       };
       commitGameResultToServer(next, netChipChange, outcome);
@@ -334,10 +350,11 @@ export default function RoyalCasinoApp() {
   // Sync with server & BroadcastChannel
   const fetchServerData = useCallback(async () => {
     try {
+      const currentProfile = profileRef.current;
       const requestedCode = activeRoomCodeRef.current;
       const params = new URLSearchParams();
       if (requestedCode) params.set("roomCode", requestedCode);
-      if (profile?.id) params.set("playerId", profile.id);
+      if (currentProfile?.id) params.set("playerId", currentProfile.id);
       const qs = params.toString();
 
       const res = await fetch(`/api/game${qs ? `?${qs}` : ""}`, {
@@ -348,25 +365,33 @@ export default function RoyalCasinoApp() {
       if (data.leaderboard) setLeaderboard(data.leaderboard);
       if (data.rooms) setRooms(data.rooms);
 
-      // Sync authoritative chip balance from server when not mid-hand in single player
-      const singleBjActive = Boolean(bjGame && !bjGame.isGameOver);
-      const singlePistiActive = Boolean(pistiGame && !pistiGame.isGameOver);
-      if (data.me && profile && !singleBjActive && !singlePistiActive) {
-        if (
-          data.me.chips !== profile.chips ||
-          data.me.wins !== profile.wins ||
-          data.me.losses !== profile.losses ||
-          data.me.draws !== profile.draws ||
-          data.me.lastDailyBonusAt !== profile.lastDailyBonusAt
+      // Only overwrite local chips if Admin modified the player's balance on the server,
+      // or if server restarted and lost the player entry, re-sync local profile to server.
+      if (currentProfile) {
+        if (!data.me) {
+          fetch("/api/game", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "syncProfile",
+              profile: currentProfile,
+            }),
+          }).catch(() => {});
+        } else if (
+          (data.me.adminUpdatedAt ?? 0) > (currentProfile.adminUpdatedAt ?? 0)
         ) {
           persistLocalProfile({
-            ...profile,
+            ...currentProfile,
             chips: data.me.chips,
             wins: data.me.wins,
             losses: data.me.losses,
             draws: data.me.draws,
             lastDailyBonusAt: data.me.lastDailyBonusAt,
+            adminUpdatedAt: data.me.adminUpdatedAt,
           });
+          notifyToast(
+            `🔔 Bakiyeniz yönetici tarafından güncellendi: ${data.me.chips.toLocaleString("tr-TR")} Çip`
+          );
         }
       }
 
@@ -378,8 +403,8 @@ export default function RoyalCasinoApp() {
         const serverRoom: OnlineRoom | null = data.room ?? null;
         const stillMember =
           serverRoom &&
-          profile &&
-          serverRoom.players.some((p) => p.id === profile.id);
+          currentProfile &&
+          serverRoom.players.some((p) => p.id === currentProfile.id);
 
         if (serverRoom && stillMember) {
           setCurrentRoom(serverRoom);
@@ -389,11 +414,12 @@ export default function RoyalCasinoApp() {
         }
       }
     } catch {}
-  }, [profile, bjGame, pistiGame, persistLocalProfile]);
+  }, [persistLocalProfile]);
 
   const syncedInitialProfileRef = useRef(false);
   useEffect(() => {
     if (!profile || syncedInitialProfileRef.current) return;
+    profileRef.current = profile;
     syncedInitialProfileRef.current = true;
     fetch("/api/game", {
       method: "POST",
@@ -403,7 +429,10 @@ export default function RoyalCasinoApp() {
       .then((r) => r.json())
       .then((d) => {
         if (d.leaderboard) setLeaderboard(d.leaderboard);
-        if (d.me) {
+        if (
+          d.me &&
+          (d.me.adminUpdatedAt ?? 0) > (profile.adminUpdatedAt ?? 0)
+        ) {
           persistLocalProfile({
             ...profile,
             chips: d.me.chips,
@@ -411,6 +440,7 @@ export default function RoyalCasinoApp() {
             losses: d.me.losses,
             draws: d.me.draws,
             lastDailyBonusAt: d.me.lastDailyBonusAt,
+            adminUpdatedAt: d.me.adminUpdatedAt,
           });
         }
       })
@@ -1561,22 +1591,68 @@ export default function RoyalCasinoApp() {
                       )}
                     </>
                   ) : !bjDealerDrawing ? (
-                    <div className="flex flex-wrap justify-center gap-3">
-                      <button
-                        type="button"
-                        onClick={handleStartBlackjack}
-                        className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-bold text-base shadow-xl hover:brightness-110 transition flex items-center gap-2 cursor-pointer"
-                      >
-                        <RefreshCw className="w-5 h-5" />
-                        Aynı Bahisle Tekrar Oyna ({betInput} Çip)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setBjGame(null)}
-                        className="px-6 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-base transition cursor-pointer"
-                      >
-                        Bahis Değiştir
-                      </button>
+                    <div className="w-full max-w-xl mx-auto rounded-2xl bg-slate-950/90 border border-amber-400/40 p-5 text-center space-y-4 animate-pop-banner">
+                      <div className="text-sm font-semibold">
+                        {bjGame.chipChange > 0 ? (
+                          <span className="text-emerald-400">
+                            🎉 +{bjGame.chipChange} Çip Kazandınız! • Güncel
+                            Bakiyeniz:{" "}
+                            <strong>
+                              {profile.chips.toLocaleString("tr-TR")} Çip
+                            </strong>
+                          </span>
+                        ) : bjGame.chipChange < 0 ? (
+                          <span className="text-rose-400">
+                            📉 {bjGame.chipChange} Çip • Güncel Bakiyeniz:{" "}
+                            <strong>
+                              {profile.chips.toLocaleString("tr-TR")} Çip
+                            </strong>
+                          </span>
+                        ) : (
+                          <span className="text-amber-300">
+                            🤝 Bahsiniz İade Edildi • Güncel Bakiyeniz:{" "}
+                            <strong>
+                              {profile.chips.toLocaleString("tr-TR")} Çip
+                            </strong>
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap justify-center gap-3">
+                        <button
+                          type="button"
+                          onClick={handleStartBlackjack}
+                          className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-bold text-sm shadow-xl hover:brightness-110 transition flex items-center gap-2 cursor-pointer"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                          Tekrar Oyna ({betInput} Çip)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const won = bjGame.chipChange;
+                            setBjGame(null);
+                            setActiveTab("profile");
+                            notifyToast(
+                              won > 0
+                                ? `💰 +${won} Çip kazancınızla masadan ayrıldınız. Toplam Bakiye: ${profile.chips.toLocaleString("tr-TR")} Çip`
+                                : `Masadan ayrıldınız. Güncel Bakiye: ${profile.chips.toLocaleString("tr-TR")} Çip`
+                            );
+                          }}
+                          className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow-lg transition flex items-center gap-2 cursor-pointer"
+                        >
+                          <Coins className="w-4 h-4" />
+                          {bjGame.chipChange > 0
+                            ? "Kazancı Alıp Çık"
+                            : "Masadan Çık"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setBjGame(null)}
+                          className="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-sm transition cursor-pointer"
+                        >
+                          Bahis Değiştir
+                        </button>
+                      </div>
                     </div>
                   ) : null}
                 </div>
@@ -1882,7 +1958,7 @@ export default function RoyalCasinoApp() {
                           ))}
                         </div>
                       ) : (
-                        <div className="rounded-2xl bg-slate-950/90 border border-amber-400/50 p-6 max-w-lg mx-auto space-y-4 animate-pop-banner">
+                        <div className="rounded-2xl bg-slate-950/90 border border-amber-400/50 p-6 max-w-xl mx-auto space-y-4 animate-pop-banner">
                           <h4 className="font-display text-2xl font-bold text-amber-300">
                             {pistiGame.gameMessage}
                           </h4>
@@ -1894,18 +1970,63 @@ export default function RoyalCasinoApp() {
                             {pistiGame.dealerCaptured.length} kart,{" "}
                             {pistiGame.dealerPistiCount} pişti)
                           </p>
-                          <div className="flex justify-center gap-3 pt-2">
+                          <div className="text-sm font-semibold">
+                            {pistiGame.chipChange > 0 ? (
+                              <span className="text-emerald-400">
+                                🎉 +{pistiGame.chipChange} Çip Kazandınız! •
+                                Güncel Bakiyeniz:{" "}
+                                <strong>
+                                  {profile.chips.toLocaleString("tr-TR")} Çip
+                                </strong>
+                              </span>
+                            ) : pistiGame.chipChange < 0 ? (
+                              <span className="text-rose-400">
+                                📉 {pistiGame.chipChange} Çip • Güncel
+                                Bakiyeniz:{" "}
+                                <strong>
+                                  {profile.chips.toLocaleString("tr-TR")} Çip
+                                </strong>
+                              </span>
+                            ) : (
+                              <span className="text-amber-300">
+                                🤝 Bahsiniz İade Edildi • Güncel Bakiyeniz:{" "}
+                                <strong>
+                                  {profile.chips.toLocaleString("tr-TR")} Çip
+                                </strong>
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap justify-center gap-3 pt-2">
                             <button
                               type="button"
                               onClick={handleStartPisti}
-                              className="px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold transition cursor-pointer"
+                              className="px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm transition cursor-pointer"
                             >
                               Tekrar Oyna ({betInput} Çip)
                             </button>
                             <button
                               type="button"
+                              onClick={() => {
+                                const won = pistiGame.chipChange;
+                                setPistiGame(null);
+                                setActiveTab("profile");
+                                notifyToast(
+                                  won > 0
+                                    ? `💰 +${won} Çip kazancınızla masadan ayrıldınız. Toplam Bakiye: ${profile.chips.toLocaleString("tr-TR")} Çip`
+                                    : `Masadan ayrıldınız. Güncel Bakiye: ${profile.chips.toLocaleString("tr-TR")} Çip`
+                                );
+                              }}
+                              className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm flex items-center gap-2 transition cursor-pointer"
+                            >
+                              <Coins className="w-4 h-4" />
+                              {pistiGame.chipChange > 0
+                                ? "Kazancı Alıp Çık"
+                                : "Masadan Çık"}
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => setPistiGame(null)}
-                              className="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold transition cursor-pointer"
+                              className="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm transition cursor-pointer"
                             >
                               Bahis Değiştir
                             </button>
@@ -2769,13 +2890,22 @@ export default function RoyalCasinoApp() {
                               <div className="text-lg font-bold text-amber-300">
                                 {currentRoom.winnerMessage}
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => handleStartOnlineGame(true, true)}
-                                className="px-8 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold transition cursor-pointer"
-                              >
-                                2v2 Rövanş Başlat (Tekrar Oyna)
-                              </button>
+                              <div className="flex flex-wrap justify-center gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartOnlineGame(true, true)}
+                                  className="px-7 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold transition cursor-pointer"
+                                >
+                                  🔄 2v2 Rövanş Başlat (Tekrar Oyna)
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleLeaveRoom}
+                                  className="px-6 py-3.5 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-200 font-bold transition cursor-pointer"
+                                >
+                                  💰 Kazancı Alıp Masadan Çık
+                                </button>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -2959,13 +3089,22 @@ export default function RoyalCasinoApp() {
                               <div className="text-lg font-bold text-amber-300">
                                 {currentRoom.winnerMessage}
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => handleStartOnlineGame(true)}
-                                className="px-8 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold transition cursor-pointer"
-                              >
-                                Rövanş Başlat (Tekrar Oyna)
-                              </button>
+                              <div className="flex flex-wrap justify-center gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartOnlineGame(true)}
+                                  className="px-7 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold transition cursor-pointer"
+                                >
+                                  🔄 Rövanş Başlat (Tekrar Oyna)
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleLeaveRoom}
+                                  className="px-6 py-3.5 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-200 font-bold transition cursor-pointer"
+                                >
+                                  💰 Kazancı Alıp Masadan Çık
+                                </button>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -3097,13 +3236,22 @@ export default function RoyalCasinoApp() {
                               </div>
                             )
                           ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleStartOnlineGame(true)}
-                              className="px-8 py-3.5 rounded-2xl bg-amber-400 text-slate-950 font-bold cursor-pointer"
-                            >
-                              Yeni El Dağıt
-                            </button>
+                            <div className="flex flex-wrap justify-center gap-3">
+                              <button
+                                type="button"
+                                onClick={() => handleStartOnlineGame(true)}
+                                className="px-7 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold transition cursor-pointer"
+                              >
+                                🔄 Yeni El Dağıt (Tekrar Oyna)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleLeaveRoom}
+                                className="px-6 py-3.5 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-200 font-bold transition cursor-pointer"
+                              >
+                                💰 Kazancı Alıp Masadan Çık
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
