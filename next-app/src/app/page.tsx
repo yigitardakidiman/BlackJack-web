@@ -1122,21 +1122,6 @@ export default function RoyalCasinoApp() {
       {/* SIDEBAR NAVIGATION */}
       <aside className="w-full lg:w-72 bg-slate-950/85 border-b lg:border-b-0 lg:border-r border-emerald-900/60 backdrop-blur-md flex flex-col justify-between p-5 shrink-0">
         <div>
-          {/* Brand Logo */}
-          <div className="flex items-center justify-between lg:justify-start gap-3 mb-6">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 shadow-lg shadow-amber-500/20">
-              <Spade className="w-6 h-6 fill-current" />
-            </div>
-            <div>
-              <h1 className="font-display text-lg font-extrabold tracking-wider text-amber-300 leading-tight">
-                ROYAL VELVET
-              </h1>
-              <p className="text-[11px] uppercase tracking-widest text-emerald-400/80">
-                Online Casino & Club
-              </p>
-            </div>
-          </div>
-
           {/* Player Mini Wallet Card */}
           <div className="rounded-2xl bg-gradient-to-br from-emerald-950/90 to-slate-900/90 border border-amber-500/30 p-4 mb-6 shadow-inner">
             <div className="flex items-center justify-between mb-3">
@@ -1273,24 +1258,6 @@ export default function RoyalCasinoApp() {
               <span>Profilim & Geçmiş</span>
             </button>
           </nav>
-        </div>
-
-        {/* Footer Info */}
-        <div className="hidden lg:block pt-6 border-t border-white/10 text-xs text-slate-400 space-y-2">
-          <div className="flex items-center gap-2 text-emerald-400 font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            Next.js Online Motor Aktif
-          </div>
-          <p className="text-[11px] text-slate-500">
-            Vercel Serverless & Gerçek Zamanlı Oda Senkronizasyonu
-          </p>
-          <a
-            href="/admin"
-            className="inline-flex items-center gap-1.5 text-[11px] text-amber-300/80 hover:text-amber-300 underline pt-1 transition"
-          >
-            <Crown className="w-3.5 h-3.5" />
-            Yönetici Paneli (/admin)
-          </a>
         </div>
       </aside>
 
