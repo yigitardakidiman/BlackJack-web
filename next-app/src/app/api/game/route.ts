@@ -54,60 +54,20 @@ function syncPlayerChipsInRooms(store: GlobalStore, playerId: string, chips: num
 
 function getStore(): GlobalStore {
   if (!globalForGame.__royalCasinoStore) {
-    const leaderboard = new Map<string, LeaderboardEntry>();
-    // Seed initial competitive players so leaderboard is rich out of the box
-    const seeds: LeaderboardEntry[] = [
-      {
-        id: "seed-1",
-        nickname: "KaroKralı_34",
-        avatar: "👑",
-        chips: 4850,
-        wins: 24,
-        losses: 9,
-        draws: 2,
-        updatedAt: Date.now() - 3600_000,
-      },
-      {
-        id: "seed-2",
-        nickname: "AsMaça_Emre",
-        avatar: "♠️",
-        chips: 3400,
-        wins: 18,
-        losses: 7,
-        draws: 3,
-        updatedAt: Date.now() - 7200_000,
-      },
-      {
-        id: "seed-3",
-        nickname: "PiştiUstası",
-        avatar: "🃏",
-        chips: 2750,
-        wins: 15,
-        losses: 8,
-        draws: 1,
-        updatedAt: Date.now() - 9400_000,
-      },
-      {
-        id: "seed-4",
-        nickname: "MonteCarlo_VIP",
-        avatar: "💎",
-        chips: 1950,
-        wins: 11,
-        losses: 6,
-        draws: 2,
-        updatedAt: Date.now() - 12400_000,
-      },
-    ];
-    for (const s of seeds) leaderboard.set(s.id, s);
-
     globalForGame.__royalCasinoStore = {
       rooms: new Map<string, OnlineRoom>(),
-      leaderboard,
+      leaderboard: new Map<string, LeaderboardEntry>(),
       deletedPlayerIds: new Set<string>(),
     };
   }
   if (!globalForGame.__royalCasinoStore.deletedPlayerIds) {
     globalForGame.__royalCasinoStore.deletedPlayerIds = new Set<string>();
+  }
+  // Remove any legacy mock/seed entries if present in memory
+  for (const id of Array.from(globalForGame.__royalCasinoStore.leaderboard.keys())) {
+    if (id.startsWith("seed-")) {
+      globalForGame.__royalCasinoStore.leaderboard.delete(id);
+    }
   }
   return globalForGame.__royalCasinoStore;
 }

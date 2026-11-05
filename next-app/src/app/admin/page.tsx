@@ -429,11 +429,6 @@ export default function AdminPage() {
                             <div>
                               <div className="font-bold text-white flex items-center gap-2">
                                 <span>{player.nickname}</span>
-                                {player.id.startsWith("seed-") && (
-                                  <span className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-400 font-normal">
-                                    Bot/Seed
-                                  </span>
-                                )}
                               </div>
                               <div className="text-[11px] text-slate-500 font-mono-num">
                                 ID: {player.id}
