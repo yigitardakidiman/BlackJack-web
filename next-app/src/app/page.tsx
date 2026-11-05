@@ -110,7 +110,9 @@ export default function RoyalCasinoApp() {
   const [rooms, setRooms] = useState<OnlineRoom[]>([]);
   const [currentRoom, setCurrentRoom] = useState<OnlineRoom | null>(null);
   const activeRoomCodeRef = useRef<string | null>(null);
+  const consecutiveMissedRoomPollsRef = useRef<number>(0);
   const isSessionGuestRef = useRef<boolean>(false);
+  const profileRef = useRef<PlayerProfile | null>(null);
 
   // Online Pişti animation state
   const [onlinePistiAnim, setOnlinePistiAnim] =
@@ -130,16 +132,35 @@ export default function RoyalCasinoApp() {
     setToast(msg);
   }, []);
 
+  const switchTab = useCallback((nextTab: ActiveTab) => {
+    setActiveTab(nextTab);
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem("royal_active_tab", nextTab);
+        const u = new URL(window.location.href);
+        u.searchParams.set("tab", nextTab);
+        window.history.replaceState(null, "", u.pathname + u.search);
+      } catch {}
+    }
+  }, []);
+
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 3500);
     return () => clearTimeout(t);
   }, [toast]);
 
-  // Load profile from storage (or sessionStorage if opened via ?join= CODE for 2-tab testing)
+  // Load profile & restore tab / active room from storage & URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const joinParam = params.get("join")?.toUpperCase();
+    const joinParam = (params.get("join") || params.get("room") || "")
+      .trim()
+      .toUpperCase();
+    const tabParam = params.get("tab") as ActiveTab | null;
+    const savedRoom = (sessionStorage.getItem("royal_active_room") || "")
+      .trim()
+      .toUpperCase();
+    const savedTab = sessionStorage.getItem("royal_active_tab") as ActiveTab | null;
 
     let loaded: PlayerProfile | null = null;
 
@@ -176,20 +197,52 @@ export default function RoyalCasinoApp() {
       }
     }
 
+    profileRef.current = loaded;
     setProfile(loaded);
     setEditNickname(loaded.nickname);
     setEditAvatar(loaded.avatar);
 
-    if (joinParam && loaded) {
-      setActiveTab("online");
-      setRoomCodeInput(joinParam);
-      window.history.replaceState({}, "", window.location.pathname);
+    const validTabs: ActiveTab[] = [
+      "blackjack",
+      "pisti",
+      "online",
+      "leaderboard",
+      "profile",
+    ];
+    const targetRoom = joinParam || savedRoom;
+    const resolvedTab: ActiveTab = targetRoom
+      ? "online"
+      : tabParam && validTabs.includes(tabParam)
+      ? tabParam
+      : savedTab && validTabs.includes(savedTab)
+      ? savedTab
+      : "blackjack";
+
+    setActiveTab(resolvedTab);
+    try {
+      sessionStorage.setItem("royal_active_tab", resolvedTab);
+    } catch {}
+
+    if (targetRoom && loaded) {
+      activeRoomCodeRef.current = targetRoom;
+      setRoomCodeInput(targetRoom);
+      try {
+        sessionStorage.setItem("royal_active_room", targetRoom);
+      } catch {}
+
+      // Keep tab and room in URL cleanly without losing on refresh
+      const u = new URL(window.location.href);
+      u.searchParams.set("tab", "online");
+      u.searchParams.set("room", targetRoom);
+      u.searchParams.delete("join");
+      window.history.replaceState(null, "", u.pathname + u.search);
+
       fetch("/api/game", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "joinRoom",
-          code: joinParam,
+          code: targetRoom,
           player: {
             id: loaded.id,
             nickname: loaded.nickname,
@@ -202,15 +255,19 @@ export default function RoyalCasinoApp() {
         .then((data) => {
           if (data.ok && data.room) {
             activeRoomCodeRef.current = data.room.code;
+            consecutiveMissedRoomPollsRef.current = 0;
             setCurrentRoom(data.room);
             bcRef.current?.postMessage({ ts: Date.now() });
+          } else if (data.status === 404 || data.error?.includes("bulunamadı")) {
+            try {
+              sessionStorage.removeItem("royal_active_room");
+            } catch {}
+            activeRoomCodeRef.current = null;
           }
         })
         .catch(() => {});
     }
   }, []);
-
-  const profileRef = useRef<PlayerProfile | null>(null);
 
   const persistLocalProfile = useCallback((next: PlayerProfile) => {
     profileRef.current = next;
@@ -350,7 +407,7 @@ export default function RoyalCasinoApp() {
   // Sync with server & BroadcastChannel
   const fetchServerData = useCallback(async () => {
     try {
-      const currentProfile = profileRef.current;
+      const currentProfile = profileRef.current || profile;
       const requestedCode = activeRoomCodeRef.current;
       const params = new URLSearchParams();
       if (requestedCode) params.set("roomCode", requestedCode);
@@ -401,20 +458,55 @@ export default function RoyalCasinoApp() {
 
       if (requestedCode) {
         const serverRoom: OnlineRoom | null = data.room ?? null;
-        const stillMember =
+        const stillMember = Boolean(
           serverRoom &&
-          currentProfile &&
-          serverRoom.players.some((p) => p.id === currentProfile.id);
+            currentProfile &&
+            serverRoom.players.some((p) => p.id === currentProfile.id)
+        );
 
         if (serverRoom && stillMember) {
+          consecutiveMissedRoomPollsRef.current = 0;
           setCurrentRoom(serverRoom);
-        } else {
-          activeRoomCodeRef.current = null;
-          setCurrentRoom(null);
+        } else if (!serverRoom) {
+          // Room not returned on this tick (might be a temporary network hiccup or server re-compile)
+          consecutiveMissedRoomPollsRef.current += 1;
+          if (consecutiveMissedRoomPollsRef.current >= 6) {
+            consecutiveMissedRoomPollsRef.current = 0;
+            activeRoomCodeRef.current = null;
+            if (typeof window !== "undefined") {
+              try {
+                sessionStorage.removeItem("royal_active_room");
+                const u = new URL(window.location.href);
+                u.searchParams.delete("room");
+                u.searchParams.delete("join");
+                window.history.replaceState(null, "", u.pathname + (u.search ? u.search : ""));
+              } catch {}
+            }
+            setCurrentRoom(null);
+            notifyToast("Masa kapatıldı veya bulunamadı.");
+          }
+        } else if (!stillMember) {
+          // Server returned room, but player is missing from players list
+          consecutiveMissedRoomPollsRef.current += 1;
+          if (consecutiveMissedRoomPollsRef.current >= 4) {
+            consecutiveMissedRoomPollsRef.current = 0;
+            activeRoomCodeRef.current = null;
+            if (typeof window !== "undefined") {
+              try {
+                sessionStorage.removeItem("royal_active_room");
+                const u = new URL(window.location.href);
+                u.searchParams.delete("room");
+                u.searchParams.delete("join");
+                window.history.replaceState(null, "", u.pathname + (u.search ? u.search : ""));
+              } catch {}
+            }
+            setCurrentRoom(null);
+            notifyToast("Masadan ayrıldınız veya çıkarıldınız.");
+          }
         }
       }
     } catch {}
-  }, [persistLocalProfile]);
+  }, [persistLocalProfile, profile]);
 
   const syncedInitialProfileRef = useRef(false);
   useEffect(() => {
@@ -883,7 +975,18 @@ export default function RoyalCasinoApp() {
     const data = await res.json();
     if (data.ok && data.room) {
       activeRoomCodeRef.current = data.room.code;
+      consecutiveMissedRoomPollsRef.current = 0;
+      try {
+        sessionStorage.setItem("royal_active_room", data.room.code);
+        sessionStorage.setItem("royal_active_tab", "online");
+        const u = new URL(window.location.href);
+        u.searchParams.set("tab", "online");
+        u.searchParams.set("room", data.room.code);
+        u.searchParams.delete("join");
+        window.history.replaceState(null, "", u.pathname + u.search);
+      } catch {}
       setCurrentRoom(data.room);
+      setActiveTab("online");
       pingRealtime();
       notifyToast(`Oda kuruldu! Oda Kodu: ${data.room.code}`);
     } else {
@@ -915,6 +1018,16 @@ export default function RoyalCasinoApp() {
     const data = await res.json();
     if (data.ok && data.room) {
       activeRoomCodeRef.current = data.room.code;
+      consecutiveMissedRoomPollsRef.current = 0;
+      try {
+        sessionStorage.setItem("royal_active_room", data.room.code);
+        sessionStorage.setItem("royal_active_tab", "online");
+        const u = new URL(window.location.href);
+        u.searchParams.set("tab", "online");
+        u.searchParams.set("room", data.room.code);
+        u.searchParams.delete("join");
+        window.history.replaceState(null, "", u.pathname + u.search);
+      } catch {}
       setCurrentRoom(data.room);
       setActiveTab("online");
       pingRealtime();
@@ -929,6 +1042,14 @@ export default function RoyalCasinoApp() {
     const codeToLeave = currentRoom.code;
 
     activeRoomCodeRef.current = null;
+    consecutiveMissedRoomPollsRef.current = 0;
+    try {
+      sessionStorage.removeItem("royal_active_room");
+      const u = new URL(window.location.href);
+      u.searchParams.delete("room");
+      u.searchParams.delete("join");
+      window.history.replaceState(null, "", u.pathname + (u.search ? u.search : ""));
+    } catch {}
     setCurrentRoom(null);
 
     try {
@@ -1268,7 +1389,7 @@ export default function RoyalCasinoApp() {
           <nav className="flex flex-col gap-2">
             <button
               type="button"
-              onClick={() => setActiveTab("blackjack")}
+              onClick={() => switchTab("blackjack")}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm whitespace-nowrap transition cursor-pointer ${
                 activeTab === "blackjack"
                   ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/20"
@@ -1281,7 +1402,7 @@ export default function RoyalCasinoApp() {
 
             <button
               type="button"
-              onClick={() => setActiveTab("pisti")}
+              onClick={() => switchTab("pisti")}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm whitespace-nowrap transition cursor-pointer ${
                 activeTab === "pisti"
                   ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/20"
@@ -1294,7 +1415,7 @@ export default function RoyalCasinoApp() {
 
             <button
               type="button"
-              onClick={() => setActiveTab("online")}
+              onClick={() => switchTab("online")}
               className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl font-semibold text-sm whitespace-nowrap transition cursor-pointer ${
                 activeTab === "online"
                   ? "bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/20"
@@ -1303,16 +1424,16 @@ export default function RoyalCasinoApp() {
             >
               <div className="flex items-center gap-3">
                 <Users className="w-4 h-4" />
-                <span>Online Multiplayer</span>
+                <span>{currentRoom ? `Masam (${currentRoom.code})` : "Online Multiplayer"}</span>
               </div>
               <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-full bg-emerald-950 text-emerald-300">
-                CANLI ({rooms.length})
+                {currentRoom ? "MASADASINIZ" : `CANLI (${rooms.length})`}
               </span>
             </button>
 
             <button
               type="button"
-              onClick={() => setActiveTab("leaderboard")}
+              onClick={() => switchTab("leaderboard")}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm whitespace-nowrap transition cursor-pointer ${
                 activeTab === "leaderboard"
                   ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/20"
@@ -1325,7 +1446,7 @@ export default function RoyalCasinoApp() {
 
             <button
               type="button"
-              onClick={() => setActiveTab("profile")}
+              onClick={() => switchTab("profile")}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm whitespace-nowrap transition cursor-pointer ${
                 activeTab === "profile"
                   ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/20"
@@ -1343,7 +1464,7 @@ export default function RoyalCasinoApp() {
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-emerald-900/70 px-1.5 py-1.5 grid grid-cols-5 gap-1">
         <button
           type="button"
-          onClick={() => setActiveTab("blackjack")}
+          onClick={() => switchTab("blackjack")}
           className={`flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition cursor-pointer ${
             activeTab === "blackjack"
               ? "bg-amber-400 text-slate-950 shadow"
@@ -1356,7 +1477,7 @@ export default function RoyalCasinoApp() {
 
         <button
           type="button"
-          onClick={() => setActiveTab("pisti")}
+          onClick={() => switchTab("pisti")}
           className={`flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition cursor-pointer ${
             activeTab === "pisti"
               ? "bg-amber-400 text-slate-950 shadow"
@@ -1369,25 +1490,27 @@ export default function RoyalCasinoApp() {
 
         <button
           type="button"
-          onClick={() => setActiveTab("online")}
+          onClick={() => switchTab("online")}
           className={`relative flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition cursor-pointer ${
             activeTab === "online"
               ? "bg-emerald-400 text-slate-950 shadow"
               : "text-emerald-300 bg-emerald-950/40"
           }`}
         >
-          <Users className="w-4 h-4 mb-0.5" />
-          <span>Online</span>
-          {rooms.length > 0 && (
+          {currentRoom ? (
+            <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-amber-400 border border-slate-950 animate-ping" />
+          ) : rooms.length > 0 ? (
             <span className="absolute top-1 right-2 w-4 h-4 rounded-full bg-amber-400 text-slate-950 text-[9px] font-extrabold flex items-center justify-center">
               {rooms.length}
             </span>
-          )}
+          ) : null}
+          <Users className="w-4 h-4 mb-0.5" />
+          <span>{currentRoom ? "Masam" : "Online"}</span>
         </button>
 
         <button
           type="button"
-          onClick={() => setActiveTab("leaderboard")}
+          onClick={() => switchTab("leaderboard")}
           className={`flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition cursor-pointer ${
             activeTab === "leaderboard"
               ? "bg-amber-400 text-slate-950 shadow"
@@ -1400,7 +1523,7 @@ export default function RoyalCasinoApp() {
 
         <button
           type="button"
-          onClick={() => setActiveTab("profile")}
+          onClick={() => switchTab("profile")}
           className={`flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition cursor-pointer ${
             activeTab === "profile"
               ? "bg-amber-400 text-slate-950 shadow"
@@ -1411,6 +1534,30 @@ export default function RoyalCasinoApp() {
           <span>Profilim</span>
         </button>
       </nav>
+
+      {/* Floating Active Room Banner if user switched to another tab */}
+      {currentRoom && activeTab !== "online" && (
+        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-40 w-[94%] max-w-md p-2.5 sm:p-3 rounded-2xl bg-emerald-950/95 border-2 border-emerald-400/80 shadow-2xl flex items-center justify-between gap-3 animate-pulse">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+            <div className="min-w-0 text-xs">
+              <span className="font-bold text-emerald-200 truncate block">
+                Canlı Masa: {currentRoom.name} ({currentRoom.code})
+              </span>
+              <span className="text-[10px] text-emerald-300/80">
+                Oyun masanız devam ediyor!
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => switchTab("online")}
+            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 font-bold text-xs shadow hover:brightness-110 cursor-pointer shrink-0"
+          >
+            Masaya Dön
+          </button>
+        </div>
+      )}
 
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 p-3 sm:p-6 lg:p-8 pb-24 lg:pb-8 overflow-y-auto">
