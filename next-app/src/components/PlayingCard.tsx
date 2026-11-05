@@ -31,27 +31,27 @@ export function PlayingCard({
   style,
 }: PlayingCardProps) {
   const dimensions = {
-    sm: "w-16 h-24 rounded-lg",
-    md: "w-20 h-28 sm:w-24 sm:h-36 rounded-xl",
-    lg: "w-24 h-36 sm:w-28 sm:h-40 rounded-xl",
+    sm: "w-12 h-[72px] sm:w-16 sm:h-24 rounded-lg",
+    md: "w-16 h-24 sm:w-24 sm:h-36 rounded-xl",
+    lg: "w-[70px] h-[104px] sm:w-28 sm:h-40 rounded-xl",
   }[size];
 
   const cornerRankSize = {
-    sm: "text-xs",
-    md: "text-sm sm:text-base",
-    lg: "text-base sm:text-lg",
+    sm: "text-[10px] sm:text-xs",
+    md: "text-xs sm:text-base",
+    lg: "text-xs sm:text-lg",
   }[size];
 
   const cornerSuitSize = {
-    sm: "text-[10px]",
-    md: "text-xs sm:text-sm",
-    lg: "text-xs sm:text-sm",
+    sm: "text-[9px] sm:text-[10px]",
+    md: "text-[10px] sm:text-sm",
+    lg: "text-[10px] sm:text-sm",
   }[size];
 
   const centerSuitSize = {
-    sm: "text-2xl",
-    md: "text-3xl sm:text-4xl",
-    lg: "text-4xl sm:text-5xl",
+    sm: "text-lg sm:text-2xl",
+    md: "text-2xl sm:text-4xl",
+    lg: "text-3xl sm:text-5xl",
   }[size];
 
   if (faceDown || !card) {
@@ -95,7 +95,7 @@ export function PlayingCard({
     <>
       {/* Top Left Corner Index */}
       <div
-        className={`absolute top-1.5 left-2 flex flex-col items-center leading-none font-bold pointer-events-none ${textColor}`}
+        className={`absolute top-1 left-1.5 sm:top-1.5 sm:left-2 flex flex-col items-center leading-none font-bold pointer-events-none ${textColor}`}
       >
         <span className={`${cornerRankSize} font-mono tracking-tighter`}>
           {rank}
@@ -112,7 +112,7 @@ export function PlayingCard({
 
       {/* Bottom Right Corner Index */}
       <div
-        className={`absolute bottom-1.5 right-2 flex flex-col items-center leading-none font-bold rotate-180 pointer-events-none ${textColor}`}
+        className={`absolute bottom-1 right-1.5 sm:bottom-1.5 sm:right-2 flex flex-col items-center leading-none font-bold rotate-180 pointer-events-none ${textColor}`}
       >
         <span className={`${cornerRankSize} font-mono tracking-tighter`}>
           {rank}

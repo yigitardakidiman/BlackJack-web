@@ -262,109 +262,109 @@ export default function AdminPage() {
   // ADMIN DASHBOARD VIEW
   // ====================================================
   return (
-    <div className="min-h-screen casino-felt-bg text-slate-100 p-4 sm:p-8">
+    <div className="min-h-screen casino-felt-bg text-slate-100 p-3 sm:p-8">
       {/* Toast */}
       {toast && (
-        <div className="fixed top-5 right-5 z-50 flex items-center gap-2.5 px-5 py-3.5 rounded-2xl bg-slate-950/95 border border-amber-400/50 text-amber-200 shadow-2xl animate-pop-banner">
+        <div className="fixed top-3 inset-x-3 sm:inset-x-auto sm:top-5 sm:right-5 z-50 flex items-center gap-2.5 px-4 py-3 sm:px-5 sm:py-3.5 rounded-2xl bg-slate-950/95 border border-amber-400/50 text-amber-200 shadow-2xl animate-pop-banner">
           <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          <span className="text-sm font-medium">{toast}</span>
+          <span className="text-xs sm:text-sm font-medium">{toast}</span>
         </div>
       )}
 
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
         {/* Top Bar */}
-        <header className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-slate-950/85 border border-amber-500/30 p-5 sm:p-6 shadow-xl">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 shadow-lg">
-              <Crown className="w-7 h-7" />
+        <header className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 rounded-3xl bg-slate-950/85 border border-amber-500/30 p-4 sm:p-6 shadow-xl">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 shadow-lg shrink-0">
+              <Crown className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
             <div>
-              <h1 className="font-display text-xl sm:text-2xl font-bold text-amber-300">
+              <h1 className="font-display text-base sm:text-2xl font-bold text-amber-300">
                 ROYAL VELVET — YÖNETİCİ PANELİ
               </h1>
-              <p className="text-xs text-slate-400">
+              <p className="text-[11px] sm:text-xs text-slate-400">
                 Oyuncu Bakiyeleri, Çip Dağıtımı ve İstatistik Yönetimi
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <button
               type="button"
               onClick={() => fetchPlayers(token)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 text-xs font-semibold text-slate-200 transition cursor-pointer"
+              className="flex-1 sm:flex-initial justify-center inline-flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 text-xs font-semibold text-slate-200 transition cursor-pointer"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               Yenile
             </button>
             <a
               href="/"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-xs font-semibold text-emerald-300 transition"
+              className="flex-1 sm:flex-initial justify-center inline-flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-xs font-semibold text-emerald-300 transition"
             >
-              <ArrowLeft className="w-4 h-4" />
-              Oyun Masasına Dön
+              <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Masaya Dön
             </a>
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-xs font-semibold text-rose-300 transition cursor-pointer"
+              className="flex-1 sm:flex-initial justify-center inline-flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-xs font-semibold text-rose-300 transition cursor-pointer"
             >
-              <LogOut className="w-4 h-4" />
-              Çıkış Yap
+              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              Çıkış
             </button>
           </div>
         </header>
 
         {/* Summary KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="rounded-2xl bg-slate-950/80 border border-white/10 p-5 flex items-center justify-between">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div className="rounded-2xl bg-slate-950/80 border border-white/10 p-4 sm:p-5 flex items-center justify-between">
             <div>
-              <div className="text-xs uppercase tracking-wider text-slate-400">
+              <div className="text-[11px] sm:text-xs uppercase tracking-wider text-slate-400">
                 Toplam Oyuncu
               </div>
-              <div className="font-mono-num text-2xl font-extrabold text-white mt-1">
+              <div className="font-mono-num text-xl sm:text-2xl font-extrabold text-white mt-0.5 sm:mt-1">
                 {players.length}
               </div>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-emerald-300">
-              <Users className="w-6 h-6" />
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-emerald-300">
+              <Users className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
 
-          <div className="rounded-2xl bg-slate-950/80 border border-white/10 p-5 flex items-center justify-between">
+          <div className="rounded-2xl bg-slate-950/80 border border-white/10 p-4 sm:p-5 flex items-center justify-between">
             <div>
-              <div className="text-xs uppercase tracking-wider text-slate-400">
+              <div className="text-[11px] sm:text-xs uppercase tracking-wider text-slate-400">
                 Dolaşımdaki Toplam Çip
               </div>
-              <div className="font-mono-num text-2xl font-extrabold text-amber-400 mt-1">
+              <div className="font-mono-num text-xl sm:text-2xl font-extrabold text-amber-400 mt-0.5 sm:mt-1">
                 {totalChips.toLocaleString("tr-TR")} Çip
               </div>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-300">
-              <Coins className="w-6 h-6" />
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-300">
+              <Coins className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
 
-          <div className="rounded-2xl bg-slate-950/80 border border-white/10 p-5 flex items-center justify-between">
+          <div className="rounded-2xl bg-slate-950/80 border border-white/10 p-4 sm:p-5 flex items-center justify-between">
             <div>
-              <div className="text-xs uppercase tracking-wider text-slate-400">
+              <div className="text-[11px] sm:text-xs uppercase tracking-wider text-slate-400">
                 Çipi Biten (0 Çip) Oyuncular
               </div>
-              <div className="font-mono-num text-2xl font-extrabold text-rose-400 mt-1">
+              <div className="font-mono-num text-xl sm:text-2xl font-extrabold text-rose-400 mt-0.5 sm:mt-1">
                 {zeroChipPlayers}
               </div>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-rose-500/15 border border-rose-400/30 flex items-center justify-center text-rose-300">
-              <AlertCircle className="w-6 h-6" />
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-rose-500/15 border border-rose-400/30 flex items-center justify-center text-rose-300">
+              <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
         </div>
 
-        {/* Player Management Table */}
+        {/* Player Management Card / Table */}
         <div className="rounded-3xl bg-slate-950/85 border border-amber-500/30 overflow-hidden shadow-2xl">
-          <div className="p-5 sm:p-6 border-b border-white/10 flex flex-wrap items-center justify-between gap-4">
+          <div className="p-4 sm:p-6 border-b border-white/10 flex flex-wrap items-center justify-between gap-3 sm:gap-4">
             <div>
-              <h2 className="font-display text-lg font-bold text-amber-300">
+              <h2 className="font-display text-base sm:text-lg font-bold text-amber-300">
                 Oyuncu Listesi ve Çip Yönetimi
               </h2>
               <p className="text-xs text-slate-400">
@@ -385,7 +385,190 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* MOBILE PLAYER CARDS (< lg) */}
+          <div className="lg:hidden divide-y divide-white/10">
+            {filteredPlayers.length === 0 ? (
+              <div className="py-10 text-center text-xs text-slate-500">
+                Eşleşen oyuncu bulunamadı.
+              </div>
+            ) : (
+              filteredPlayers.map((player) => {
+                const customVal = customAmounts[player.id] ?? "";
+                const parsedCustom = Math.max(
+                  0,
+                  Math.floor(Number(customVal) || 0)
+                );
+
+                return (
+                  <div key={`mob-${player.id}`} className="p-4 space-y-3.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="w-10 h-10 rounded-xl bg-slate-900 border border-amber-400/30 flex items-center justify-center text-lg shrink-0">
+                          {player.avatar}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="font-bold text-sm text-white truncate">
+                            {player.nickname}
+                          </div>
+                          <div className="text-[10px] text-slate-500 font-mono-num truncate">
+                            {player.wins}G / {player.losses}M / {player.draws}B
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <div
+                          className={`font-mono-num text-base font-extrabold ${
+                            player.chips <= 0
+                              ? "text-rose-400"
+                              : "text-amber-400"
+                          }`}
+                        >
+                          {player.chips.toLocaleString("tr-TR")} Çip
+                        </div>
+                        <div className="inline-flex items-center gap-1 mt-1">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handlePlayerAction(
+                                player.id,
+                                "reset_player",
+                                undefined,
+                                `${player.nickname} sıfırlandı (1000 Çip).`
+                              )
+                            }
+                            className="p-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs"
+                            title="1000 Çipe Sıfırla"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handlePlayerAction(
+                                player.id,
+                                "delete_player",
+                                undefined,
+                                `${player.nickname} listeden silindi.`
+                              )
+                            }
+                            className="p-1.5 rounded-lg bg-rose-950/80 border border-rose-500/30 text-rose-300 text-xs"
+                            title="Oyuncuyu Sil"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Quick Chips Row */}
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {[250, 500, 1000].map((amt) => (
+                        <button
+                          key={`m-add-${amt}`}
+                          type="button"
+                          onClick={() =>
+                            handlePlayerAction(
+                              player.id,
+                              "add_chips",
+                              amt,
+                              `${player.nickname} hesabına +${amt} çip eklendi.`
+                            )
+                          }
+                          className="py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono-num font-bold"
+                        >
+                          +{amt}
+                        </button>
+                      ))}
+                      {[250, 500].map((amt) => (
+                        <button
+                          key={`m-sub-${amt}`}
+                          type="button"
+                          onClick={() =>
+                            handlePlayerAction(
+                              player.id,
+                              "remove_chips",
+                              amt,
+                              `${player.nickname} hesabından -${amt} çip düşüldü.`
+                            )
+                          }
+                          className="py-1.5 rounded-lg bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-mono-num font-bold"
+                        >
+                          -{amt}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Custom Input Row */}
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        min={0}
+                        step={50}
+                        value={customVal}
+                        onChange={(e) =>
+                          setCustomAmounts((prev) => ({
+                            ...prev,
+                            [player.id]: e.target.value,
+                          }))
+                        }
+                        placeholder="Özel tutar..."
+                        className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white font-mono-num focus:outline-none focus:border-amber-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (parsedCustom <= 0) return;
+                          handlePlayerAction(
+                            player.id,
+                            "add_chips",
+                            parsedCustom,
+                            `${player.nickname} hesabına +${parsedCustom} çip eklendi.`
+                          );
+                        }}
+                        className="p-2 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (parsedCustom <= 0) return;
+                          handlePlayerAction(
+                            player.id,
+                            "remove_chips",
+                            parsedCustom,
+                            `${player.nickname} hesabından -${parsedCustom} çip silindi.`
+                          );
+                        }}
+                        className="p-2 rounded-lg bg-rose-500/20 border border-rose-500/40 text-rose-300"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (customVal.trim() === "") return;
+                          handlePlayerAction(
+                            player.id,
+                            "set_chips",
+                            parsedCustom,
+                            `${player.nickname} bakiyesi ${parsedCustom} çip olarak sabitlendi.`
+                          );
+                        }}
+                        className="px-3 py-2 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-semibold"
+                      >
+                        Sabitle
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* DESKTOP TABLE (lg+) */}
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left border-collapse text-sm">
               <thead>
                 <tr className="bg-slate-900/80 text-[11px] uppercase tracking-wider text-slate-400 border-b border-white/10">

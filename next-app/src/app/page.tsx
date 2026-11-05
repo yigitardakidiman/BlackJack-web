@@ -1075,23 +1075,23 @@ export default function RoyalCasinoApp() {
     <div className="min-h-screen casino-felt-bg text-slate-100 flex flex-col lg:flex-row">
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed top-5 right-5 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-slate-950/95 border border-amber-400/50 text-amber-200 shadow-2xl animate-pop-banner">
+        <div className="fixed top-3 inset-x-3 sm:inset-x-auto sm:top-5 sm:right-5 z-50 flex items-center gap-2.5 px-4 py-3 sm:px-5 sm:py-3.5 rounded-2xl bg-slate-950/95 border border-amber-400/50 text-amber-200 shadow-2xl animate-pop-banner">
           <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
-          <span className="text-sm font-medium">{toast}</span>
+          <span className="text-xs sm:text-sm font-medium">{toast}</span>
         </div>
       )}
 
       {/* Profile Setup / Edit Modal */}
       {showProfileModal && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-3xl bg-slate-900 border border-amber-500/40 p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-3xl bg-slate-900 border border-amber-500/40 p-5 sm:p-6 shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
               <Crown className="w-7 h-7 text-amber-400" />
-              <h2 className="font-display text-2xl font-bold text-amber-300">
+              <h2 className="font-display text-xl sm:text-2xl font-bold text-amber-300">
                 Oyuncu Kimliği
               </h2>
             </div>
-            <p className="text-sm text-slate-400 mb-5">
+            <p className="text-xs sm:text-sm text-slate-400 mb-5">
               Liderlik tablosunda ve online odalarda görünecek rumuzunuzu ve
               avatarınızı seçin.
             </p>
@@ -1149,8 +1149,56 @@ export default function RoyalCasinoApp() {
         </div>
       )}
 
-      {/* SIDEBAR NAVIGATION */}
-      <aside className="w-full lg:w-72 bg-slate-950/85 border-b lg:border-b-0 lg:border-r border-emerald-900/60 backdrop-blur-md flex flex-col justify-between p-5 shrink-0">
+      {/* MOBILE STICKY TOP WALLET BAR (< lg) */}
+      <header className="lg:hidden sticky top-0 z-30 bg-slate-950/90 backdrop-blur-md border-b border-emerald-900/60 px-3.5 py-2.5 flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            setEditNickname(profile.nickname);
+            setEditAvatar(profile.avatar);
+            setShowProfileModal(true);
+          }}
+          className="flex items-center gap-2 text-left min-w-0 cursor-pointer"
+        >
+          <span className="w-8 h-8 rounded-lg bg-slate-800 border border-amber-400/40 flex items-center justify-center text-base shrink-0">
+            {profile.avatar}
+          </span>
+          <div className="min-w-0">
+            <div className="font-bold text-xs text-white truncate max-w-[115px] sm:max-w-[180px]">
+              {profile.nickname}
+            </div>
+            <div className="text-[10px] text-slate-400 underline leading-none">
+              Düzenle
+            </div>
+          </div>
+        </button>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-900 border border-amber-500/30 text-amber-400">
+            <Coins className="w-3.5 h-3.5 shrink-0" />
+            <span className="font-mono-num text-sm font-bold">
+              {profile.chips.toLocaleString("tr-TR")}
+            </span>
+            <span className="text-[10px] text-amber-200/70">Çip</span>
+          </div>
+
+          {profile.chips <= 0 &&
+            (!profile.lastDailyBonusAt ||
+              Date.now() - profile.lastDailyBonusAt >=
+                24 * 60 * 60 * 1000) && (
+              <button
+                type="button"
+                onClick={handleClaimBonusChips}
+                className="px-2 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 text-[10px] font-bold animate-pulse cursor-pointer"
+              >
+                🎁 +250
+              </button>
+            )}
+        </div>
+      </header>
+
+      {/* DESKTOP SIDEBAR NAVIGATION (lg+) */}
+      <aside className="hidden lg:flex lg:w-72 bg-slate-950/85 border-r border-emerald-900/60 backdrop-blur-md flex-col justify-between p-5 shrink-0">
         <div>
           {/* Player Mini Wallet Card */}
           <div className="rounded-2xl bg-gradient-to-br from-emerald-950/90 to-slate-900/90 border border-amber-500/30 p-4 mb-6 shadow-inner">
@@ -1217,7 +1265,7 @@ export default function RoyalCasinoApp() {
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex lg:flex-col gap-2 overflow-x-auto pb-2 lg:pb-0">
+          <nav className="flex flex-col gap-2">
             <button
               type="button"
               onClick={() => setActiveTab("blackjack")}
@@ -1291,29 +1339,102 @@ export default function RoyalCasinoApp() {
         </div>
       </aside>
 
+      {/* MOBILE FIXED BOTTOM NAVIGATION BAR (< lg) */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-emerald-900/70 px-1.5 py-1.5 grid grid-cols-5 gap-1">
+        <button
+          type="button"
+          onClick={() => setActiveTab("blackjack")}
+          className={`flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition cursor-pointer ${
+            activeTab === "blackjack"
+              ? "bg-amber-400 text-slate-950 shadow"
+              : "text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <Spade className="w-4 h-4 mb-0.5" />
+          <span>Blackjack</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("pisti")}
+          className={`flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition cursor-pointer ${
+            activeTab === "pisti"
+              ? "bg-amber-400 text-slate-950 shadow"
+              : "text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <Sparkles className="w-4 h-4 mb-0.5" />
+          <span>Pişti</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("online")}
+          className={`relative flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition cursor-pointer ${
+            activeTab === "online"
+              ? "bg-emerald-400 text-slate-950 shadow"
+              : "text-emerald-300 bg-emerald-950/40"
+          }`}
+        >
+          <Users className="w-4 h-4 mb-0.5" />
+          <span>Online</span>
+          {rooms.length > 0 && (
+            <span className="absolute top-1 right-2 w-4 h-4 rounded-full bg-amber-400 text-slate-950 text-[9px] font-extrabold flex items-center justify-center">
+              {rooms.length}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("leaderboard")}
+          className={`flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition cursor-pointer ${
+            activeTab === "leaderboard"
+              ? "bg-amber-400 text-slate-950 shadow"
+              : "text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <Trophy className="w-4 h-4 mb-0.5" />
+          <span>Liderlik</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("profile")}
+          className={`flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition cursor-pointer ${
+            activeTab === "profile"
+              ? "bg-amber-400 text-slate-950 shadow"
+              : "text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <History className="w-4 h-4 mb-0.5" />
+          <span>Profilim</span>
+        </button>
+      </nav>
+
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 p-4 sm:p-8 overflow-y-auto">
+      <main className="flex-1 p-3 sm:p-6 lg:p-8 pb-24 lg:pb-8 overflow-y-auto">
         {/* ====================================================
             TAB 1: SINGLE PLAYER BLACKJACK
         ==================================================== */}
         {activeTab === "blackjack" && (
           <div className="max-w-5xl mx-auto">
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4 mb-4 sm:mb-6">
               <div>
-                <h2 className="font-display text-2xl sm:text-3xl font-bold text-amber-300">
+                <h2 className="font-display text-xl sm:text-3xl font-bold text-amber-300">
                   VIP Blackjack Masası
                 </h2>
-                <p className="text-sm text-slate-300">
+                <p className="text-xs sm:text-sm text-slate-300">
                   Kurpiyer 17&apos;de durur • Blackjack 3:2 öder • Split &
                   Double Down açık
                 </p>
               </div>
               {bjGame && (
-                <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-slate-950/70 border border-amber-500/30">
-                  <span className="text-xs uppercase tracking-wider text-slate-400">
-                    Aktif Bahis:
+                <div className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-slate-950/70 border border-amber-500/30">
+                  <span className="text-[11px] sm:text-xs uppercase tracking-wider text-slate-400">
+                    Bahis:
                   </span>
-                  <span className="font-mono-num text-lg font-bold text-amber-400">
+                  <span className="font-mono-num text-sm sm:text-lg font-bold text-amber-400">
                     {bjGame.currentBet} Çip
                   </span>
                 </div>
@@ -1322,24 +1443,24 @@ export default function RoyalCasinoApp() {
 
             {!bjGame ? (
               /* Betting Card */
-              <div className="max-w-lg mx-auto mt-8 rounded-3xl bg-slate-950/80 border border-amber-500/30 p-6 sm:p-8 text-center shadow-2xl">
-                <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center mx-auto mb-4 text-amber-300">
-                  <Dices className="w-8 h-8" />
+              <div className="max-w-lg mx-auto mt-3 sm:mt-8 rounded-3xl bg-slate-950/80 border border-amber-500/30 p-5 sm:p-8 text-center shadow-2xl">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center mx-auto mb-3 sm:mb-4 text-amber-300">
+                  <Dices className="w-6 h-6 sm:w-8 sm:h-8" />
                 </div>
-                <h3 className="font-display text-2xl font-bold text-white mb-2">
+                <h3 className="font-display text-xl sm:text-2xl font-bold text-white mb-1.5 sm:mb-2">
                   Bahsinizi Masaya Koyun
                 </h3>
-                <p className="text-sm text-slate-400 mb-6">
+                <p className="text-xs sm:text-sm text-slate-400 mb-5 sm:mb-6">
                   Hızlı çiplerden birini seçin veya özel bahis miktarı girin.
                 </p>
 
-                <div className="flex flex-wrap justify-center gap-2.5 mb-6">
+                <div className="flex flex-wrap justify-center gap-2 mb-5 sm:mb-6">
                   {QUICK_BETS.map((amt) => (
                     <button
                       key={amt}
                       type="button"
                       onClick={() => setBetInput(amt)}
-                      className={`px-4 py-2 rounded-full font-mono-num text-sm font-bold border transition cursor-pointer ${
+                      className={`px-3.5 py-2 rounded-full font-mono-num text-xs sm:text-sm font-bold border transition cursor-pointer ${
                         betInput === amt
                           ? "bg-amber-400 text-slate-950 border-amber-300 scale-105 shadow-lg"
                           : "bg-slate-900/90 text-amber-200 border-amber-500/30 hover:border-amber-400"
@@ -1351,14 +1472,14 @@ export default function RoyalCasinoApp() {
                   <button
                     type="button"
                     onClick={() => setBetInput(Math.max(10, profile.chips))}
-                    className="px-4 py-2 rounded-full font-mono-num text-sm font-bold bg-rose-600/20 text-rose-300 border border-rose-500/40 hover:bg-rose-600/30 transition cursor-pointer"
+                    className="px-3.5 py-2 rounded-full font-mono-num text-xs sm:text-sm font-bold bg-rose-600/20 text-rose-300 border border-rose-500/40 hover:bg-rose-600/30 transition cursor-pointer"
                   >
                     ALL-IN ({profile.chips})
                   </button>
                 </div>
 
-                <div className="flex items-center bg-slate-900 border border-slate-700 rounded-2xl px-4 py-3 mb-6">
-                  <Coins className="w-6 h-6 text-amber-400 mr-3" />
+                <div className="flex items-center bg-slate-900 border border-slate-700 rounded-2xl px-4 py-2.5 sm:py-3 mb-5 sm:mb-6">
+                  <Coins className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 mr-3" />
                   <input
                     type="number"
                     min={1}
@@ -1367,14 +1488,14 @@ export default function RoyalCasinoApp() {
                     onChange={(e) =>
                       setBetInput(Math.max(0, parseInt(e.target.value) || 0))
                     }
-                    className="w-full bg-transparent text-center font-mono-num text-2xl font-bold text-white focus:outline-none"
+                    className="w-full bg-transparent text-center font-mono-num text-xl sm:text-2xl font-bold text-white focus:outline-none"
                   />
                 </div>
 
                 <button
                   type="button"
                   onClick={handleStartBlackjack}
-                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-bold text-lg shadow-xl shadow-amber-500/20 hover:brightness-110 transition flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-bold text-base sm:text-lg shadow-xl shadow-amber-500/20 hover:brightness-110 transition flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Play className="w-5 h-5 fill-current" />
                   Kartları Dağıt
@@ -1382,7 +1503,7 @@ export default function RoyalCasinoApp() {
               </div>
             ) : (
               /* Active Blackjack Table */
-              <div className="relative rounded-3xl bg-emerald-950/40 border-2 border-amber-500/30 p-6 sm:p-8 shadow-2xl space-y-8 overflow-hidden">
+              <div className="relative rounded-3xl bg-emerald-950/40 border-2 border-amber-500/30 p-4 sm:p-8 shadow-2xl space-y-5 sm:space-y-8 overflow-hidden">
                 {/* Visual Deck Shoe in Top-Right Corner */}
                 <div className="hidden md:block absolute top-6 right-6 pointer-events-none">
                   <div className="relative w-16 h-24">
@@ -1398,9 +1519,9 @@ export default function RoyalCasinoApp() {
 
                 {/* Dealer Section */}
                 <div className="text-center">
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-950/80 border border-white/10 text-sm font-semibold mb-4">
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1 sm:px-4 sm:py-1.5 rounded-full bg-slate-950/80 border border-white/10 text-xs sm:text-sm font-semibold mb-3 sm:mb-4">
                     <span className="text-slate-300">Kurpiyerin Eli</span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono-num font-bold">
+                    <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono-num font-bold">
                       {bjGame.isGameOver
                         ? calculateBlackjackScore(
                             bjGame.dealerHand.slice(0, bjVisibleDealerCount)
@@ -1409,7 +1530,7 @@ export default function RoyalCasinoApp() {
                     </span>
                   </div>
 
-                  <div className="flex justify-center flex-wrap gap-3 min-h-[140px]">
+                  <div className="flex justify-center flex-wrap gap-2 sm:gap-3 min-h-[100px] sm:min-h-[140px]">
                     {bjGame.dealerHand
                       .slice(0, bjVisibleDealerCount)
                       .map((c, idx) => {
@@ -1444,12 +1565,12 @@ export default function RoyalCasinoApp() {
                 {/* Status Banner */}
                 <div className="text-center">
                   {bjDealerDrawing ? (
-                    <div className="inline-block px-6 py-3 rounded-2xl font-semibold text-base bg-slate-950/90 border border-amber-400/50 text-amber-300 animate-pulse">
+                    <div className="inline-block px-4 py-2 sm:px-6 sm:py-3 rounded-2xl font-semibold text-xs sm:text-base bg-slate-950/90 border border-amber-400/50 text-amber-300 animate-pulse">
                       🎴 Kurpiyer kart çekiyor...
                     </div>
                   ) : (
                     <div
-                      className={`inline-block px-6 py-3 rounded-2xl font-semibold text-base sm:text-lg border shadow-lg animate-pop-banner ${
+                      className={`inline-block px-4 py-2.5 sm:px-6 sm:py-3 rounded-2xl font-semibold text-xs sm:text-lg border shadow-lg animate-pop-banner ${
                         bjGame.isGameOver
                           ? bjGame.chipChange > 0
                             ? "bg-emerald-900/90 border-emerald-400 text-emerald-100"
@@ -1461,7 +1582,7 @@ export default function RoyalCasinoApp() {
                     >
                       {bjGame.gameMessage}
                       {bjGame.isGameOver && (
-                        <span className="ml-3 font-mono-num font-extrabold">
+                        <span className="ml-2 sm:ml-3 font-mono-num font-extrabold">
                           (
                           {bjGame.chipChange > 0
                             ? `+${bjGame.chipChange}`
@@ -1475,7 +1596,7 @@ export default function RoyalCasinoApp() {
 
                 {/* Player Hand(s) */}
                 <div
-                  className={`grid gap-6 ${
+                  className={`grid gap-4 sm:gap-6 ${
                     bjGame.hasSplit
                       ? "grid-cols-1 md:grid-cols-2"
                       : "grid-cols-1"
@@ -1483,7 +1604,7 @@ export default function RoyalCasinoApp() {
                 >
                   {/* Hand 1 */}
                   <div
-                    className={`rounded-2xl p-4 text-center transition ${
+                    className={`rounded-2xl p-3 sm:p-4 text-center transition ${
                       bjGame.hasSplit &&
                       bjGame.activeHand === 1 &&
                       !bjGame.isGameOver
@@ -1491,15 +1612,15 @@ export default function RoyalCasinoApp() {
                         : "bg-slate-950/40 border border-white/10"
                     }`}
                   >
-                    <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-slate-900 text-sm font-semibold mb-4">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-900 text-xs sm:text-sm font-semibold mb-3 sm:mb-4">
                       <span>
                         {bjGame.hasSplit ? "1. Eliniz" : "Sizin Eliniz"}
                       </span>
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono-num font-bold">
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono-num font-bold">
                         {bjGame.playerScore}
                       </span>
                     </div>
-                    <div className="flex justify-center flex-wrap gap-3">
+                    <div className="flex justify-center flex-wrap gap-2 sm:gap-3">
                       {bjGame.playerHand.map((c, idx) => {
                         const isInitial =
                           idx < 2 &&
@@ -1524,19 +1645,19 @@ export default function RoyalCasinoApp() {
                   {/* Hand 2 (if Split) */}
                   {bjGame.hasSplit && (
                     <div
-                      className={`rounded-2xl p-4 text-center transition ${
+                      className={`rounded-2xl p-3 sm:p-4 text-center transition ${
                         bjGame.activeHand === 2 && !bjGame.isGameOver
                           ? "bg-amber-500/10 border-2 border-amber-400"
                           : "bg-slate-950/40 border border-white/10"
                       }`}
                     >
-                      <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-slate-900 text-sm font-semibold mb-4">
+                      <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-900 text-xs sm:text-sm font-semibold mb-3 sm:mb-4">
                         <span>2. Eliniz</span>
-                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono-num font-bold">
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono-num font-bold">
                           {bjGame.playerScore2}
                         </span>
                       </div>
-                      <div className="flex justify-center flex-wrap gap-3">
+                      <div className="flex justify-center flex-wrap gap-2 sm:gap-3">
                         {bjGame.playerHand2.map((c, idx) => (
                           <PlayingCard
                             key={`${bjGame.id}-p2-${idx}-${c}`}
@@ -1550,14 +1671,14 @@ export default function RoyalCasinoApp() {
                 </div>
 
                 {/* Action Controls */}
-                <div className="flex flex-wrap justify-center gap-3 pt-2">
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-2.5 sm:gap-3 pt-1 sm:pt-2">
                   {!bjGame.isGameOver ? (
                     <>
                       <button
                         type="button"
                         onClick={handleBjHit}
                         disabled={bjDealerDrawing}
-                        className="px-7 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-base shadow-lg transition cursor-pointer"
+                        className="px-4 py-3 sm:px-7 sm:py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm sm:text-base shadow-lg transition cursor-pointer"
                       >
                         Kart Çek (Hit)
                       </button>
@@ -1565,7 +1686,7 @@ export default function RoyalCasinoApp() {
                         type="button"
                         onClick={handleBjStand}
                         disabled={bjDealerDrawing}
-                        className="px-7 py-3.5 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-base shadow-lg transition cursor-pointer"
+                        className="px-4 py-3 sm:px-7 sm:py-3.5 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm sm:text-base shadow-lg transition cursor-pointer"
                       >
                         Dur (Stand)
                       </button>
@@ -1574,7 +1695,7 @@ export default function RoyalCasinoApp() {
                           type="button"
                           onClick={handleBjDouble}
                           disabled={bjDealerDrawing}
-                          className="px-6 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-base shadow-lg transition cursor-pointer"
+                          className="px-4 py-3 sm:px-6 sm:py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm sm:text-base shadow-lg transition cursor-pointer"
                         >
                           İkiye Katla (2x)
                         </button>
@@ -1584,15 +1705,15 @@ export default function RoyalCasinoApp() {
                           type="button"
                           onClick={handleBjSplit}
                           disabled={bjDealerDrawing}
-                          className="px-6 py-3.5 rounded-2xl bg-sky-400 hover:bg-sky-300 text-slate-950 font-bold text-base shadow-lg transition cursor-pointer"
+                          className="px-4 py-3 sm:px-6 sm:py-3.5 rounded-2xl bg-sky-400 hover:bg-sky-300 text-slate-950 font-bold text-sm sm:text-base shadow-lg transition cursor-pointer"
                         >
                           Eli Böl (Split)
                         </button>
                       )}
                     </>
                   ) : !bjDealerDrawing ? (
-                    <div className="w-full max-w-xl mx-auto rounded-2xl bg-slate-950/90 border border-amber-400/40 p-5 text-center space-y-4 animate-pop-banner">
-                      <div className="text-sm font-semibold">
+                    <div className="col-span-2 w-full max-w-xl mx-auto rounded-2xl bg-slate-950/90 border border-amber-400/40 p-4 sm:p-5 text-center space-y-3.5 sm:space-y-4 animate-pop-banner">
+                      <div className="text-xs sm:text-sm font-semibold">
                         {bjGame.chipChange > 0 ? (
                           <span className="text-emerald-400">
                             🎉 +{bjGame.chipChange} Çip Kazandınız! • Güncel
@@ -1617,11 +1738,11 @@ export default function RoyalCasinoApp() {
                           </span>
                         )}
                       </div>
-                      <div className="flex flex-wrap justify-center gap-3">
+                      <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-2.5 sm:gap-3">
                         <button
                           type="button"
                           onClick={handleStartBlackjack}
-                          className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-bold text-sm shadow-xl hover:brightness-110 transition flex items-center gap-2 cursor-pointer"
+                          className="w-full sm:w-auto justify-center px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-bold text-xs sm:text-sm shadow-xl hover:brightness-110 transition flex items-center gap-2 cursor-pointer"
                         >
                           <RefreshCw className="w-4 h-4" />
                           Tekrar Oyna ({betInput} Çip)
@@ -1638,7 +1759,7 @@ export default function RoyalCasinoApp() {
                                 : `Masadan ayrıldınız. Güncel Bakiye: ${profile.chips.toLocaleString("tr-TR")} Çip`
                             );
                           }}
-                          className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow-lg transition flex items-center gap-2 cursor-pointer"
+                          className="w-full sm:w-auto justify-center px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm shadow-lg transition flex items-center gap-2 cursor-pointer"
                         >
                           <Coins className="w-4 h-4" />
                           {bjGame.chipChange > 0
@@ -1648,7 +1769,7 @@ export default function RoyalCasinoApp() {
                         <button
                           type="button"
                           onClick={() => setBjGame(null)}
-                          className="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-sm transition cursor-pointer"
+                          className="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs sm:text-sm transition cursor-pointer"
                         >
                           Bahis Değiştir
                         </button>
@@ -1666,24 +1787,23 @@ export default function RoyalCasinoApp() {
         ==================================================== */}
         {activeTab === "pisti" && (
           <div className="max-w-5xl mx-auto">
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4 mb-4 sm:mb-6">
               <div>
-                <h2 className="font-display text-2xl sm:text-3xl font-bold text-amber-300">
+                <h2 className="font-display text-xl sm:text-3xl font-bold text-amber-300">
                   Anadolu Kulübü — Pişti Masası
                 </h2>
-                <p className="text-sm text-slate-300">
+                <p className="text-xs sm:text-sm text-slate-300">
                   Vale (J) her şeyi toplar • Pişti +10 Puan • ♦10 (+3), ♣2 (+2),
                   As/Vale (+1), Kart Çoğunluğu (+3)
                 </p>
               </div>
               {pistiGame && (
-                <div className="flex items-center gap-4 px-4 py-2 rounded-2xl bg-slate-950/80 border border-amber-500/30 text-sm">
+                <div className="flex items-center gap-2.5 sm:gap-4 px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-slate-950/80 border border-amber-500/30 text-xs sm:text-sm">
                   <span>
-                    Destede:{" "}
+                    Deste:{" "}
                     <strong className="text-amber-300 font-mono-num">
                       {pistiGame.deck.length}
-                    </strong>{" "}
-                    Kart
+                    </strong>
                   </span>
                   <span>•</span>
                   <span>
@@ -1697,25 +1817,25 @@ export default function RoyalCasinoApp() {
             </div>
 
             {!pistiGame ? (
-              <div className="max-w-lg mx-auto mt-8 rounded-3xl bg-slate-950/80 border border-amber-500/30 p-6 sm:p-8 text-center shadow-2xl">
-                <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center mx-auto mb-4 text-amber-300">
-                  <Sparkles className="w-8 h-8" />
+              <div className="max-w-lg mx-auto mt-3 sm:mt-8 rounded-3xl bg-slate-950/80 border border-amber-500/30 p-5 sm:p-8 text-center shadow-2xl">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center mx-auto mb-3 sm:mb-4 text-amber-300">
+                  <Sparkles className="w-6 h-6 sm:w-8 sm:h-8" />
                 </div>
-                <h3 className="font-display text-2xl font-bold text-white mb-2">
+                <h3 className="font-display text-xl sm:text-2xl font-bold text-white mb-1.5 sm:mb-2">
                   Pişti Bahsinizi Seçin
                 </h3>
-                <p className="text-sm text-slate-400 mb-6">
+                <p className="text-xs sm:text-sm text-slate-400 mb-5 sm:mb-6">
                   52 kartlık tam deste bitene kadar en yüksek puanı toplayan
                   kazanır!
                 </p>
 
-                <div className="flex flex-wrap justify-center gap-2.5 mb-6">
+                <div className="flex flex-wrap justify-center gap-2 mb-5 sm:mb-6">
                   {QUICK_BETS.map((amt) => (
                     <button
                       key={amt}
                       type="button"
                       onClick={() => setBetInput(amt)}
-                      className={`px-4 py-2 rounded-full font-mono-num text-sm font-bold border transition cursor-pointer ${
+                      className={`px-3.5 py-2 rounded-full font-mono-num text-xs sm:text-sm font-bold border transition cursor-pointer ${
                         betInput === amt
                           ? "bg-amber-400 text-slate-950 border-amber-300 scale-105"
                           : "bg-slate-900 text-amber-200 border-amber-500/30"
@@ -1726,8 +1846,8 @@ export default function RoyalCasinoApp() {
                   ))}
                 </div>
 
-                <div className="flex items-center bg-slate-900 border border-slate-700 rounded-2xl px-4 py-3 mb-6">
-                  <Coins className="w-6 h-6 text-amber-400 mr-3" />
+                <div className="flex items-center bg-slate-900 border border-slate-700 rounded-2xl px-4 py-2.5 sm:py-3 mb-5 sm:mb-6">
+                  <Coins className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 mr-3" />
                   <input
                     type="number"
                     min={1}
@@ -1736,14 +1856,14 @@ export default function RoyalCasinoApp() {
                     onChange={(e) =>
                       setBetInput(Math.max(0, parseInt(e.target.value) || 0))
                     }
-                    className="w-full bg-transparent text-center font-mono-num text-2xl font-bold text-white focus:outline-none"
+                    className="w-full bg-transparent text-center font-mono-num text-xl sm:text-2xl font-bold text-white focus:outline-none"
                   />
                 </div>
 
                 <button
                   type="button"
                   onClick={handleStartPisti}
-                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-bold text-lg shadow-xl hover:brightness-110 transition flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-bold text-base sm:text-lg shadow-xl hover:brightness-110 transition flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Play className="w-5 h-5 fill-current" />
                   Pişti Başlat
@@ -1764,21 +1884,21 @@ export default function RoyalCasinoApp() {
                   : pistiGame.playerHand;
 
                 return (
-                  <div className="rounded-3xl bg-emerald-950/40 border-2 border-amber-500/30 p-5 sm:p-8 shadow-2xl space-y-6">
+                  <div className="rounded-3xl bg-emerald-950/40 border-2 border-amber-500/30 p-3.5 sm:p-8 shadow-2xl space-y-4 sm:space-y-6">
                     {/* Bot Header & Hand */}
                     <div className="flex flex-col items-center">
-                      <div className="flex flex-wrap items-center justify-center gap-3 mb-3 text-xs sm:text-sm">
-                        <span className="px-3 py-1 rounded-full bg-slate-900 border border-white/10 font-semibold">
-                          🤖 Bilgisayar: {pistiGame.dealerScore} Puan
+                      <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-3 mb-2 sm:mb-3 text-[11px] sm:text-sm">
+                        <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-slate-900 border border-white/10 font-semibold">
+                          🤖 Bot: {pistiGame.dealerScore}p
                         </span>
-                        <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 font-semibold">
+                        <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-amber-500/20 text-amber-300 font-semibold">
                           Pişti: {pistiGame.dealerPistiCount}
                         </span>
-                        <span className="px-3 py-1 rounded-full bg-slate-900 text-slate-300">
-                          Toplanan: {pistiGame.dealerCaptured.length} Kart
+                        <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-slate-900 text-slate-300">
+                          Kart: {pistiGame.dealerCaptured.length}
                         </span>
                       </div>
-                      <div className="flex justify-center gap-2 sm:gap-3 min-h-[96px]">
+                      <div className="flex justify-center gap-1.5 sm:gap-3 min-h-[74px] sm:min-h-[96px]">
                         {Array.from({ length: Math.max(0, dealerHandCount) }).map(
                           (_, idx) => (
                             <PlayingCard
@@ -1794,17 +1914,17 @@ export default function RoyalCasinoApp() {
                     </div>
 
                     {/* Center Board Area */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-6 py-4 border-y border-white/10">
+                    <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-3 sm:gap-6 py-3 sm:py-4 border-y border-white/10">
                       {/* Last Turn Move Log */}
-                      <div className="rounded-2xl bg-slate-950/60 border border-white/10 p-4 text-center">
-                        <div className="text-xs uppercase tracking-wider text-slate-400 mb-2">
+                      <div className="order-2 md:order-1 rounded-2xl bg-slate-950/60 border border-white/10 p-3 sm:p-4 text-center">
+                        <div className="text-[10px] sm:text-xs uppercase tracking-wider text-slate-400 mb-1.5 sm:mb-2">
                           Son Hamle Özeti
                         </div>
                         {pistiGame.lastAction ? (
                           <div className="flex items-center justify-center gap-4">
                             {pistiGame.lastAction.playerCard && (
-                              <div className="flex flex-col items-center gap-1.5">
-                                <span className="text-[11px] text-emerald-300 font-medium">
+                              <div className="flex flex-col items-center gap-1">
+                                <span className="text-[10px] sm:text-[11px] text-emerald-300 font-medium">
                                   Siz Attınız
                                 </span>
                                 <PlayingCard
@@ -1820,8 +1940,8 @@ export default function RoyalCasinoApp() {
                               </div>
                             )}
                             {pistiGame.lastAction.dealerCard && (
-                              <div className="flex flex-col items-center gap-1.5">
-                                <span className="text-[11px] text-rose-300 font-medium">
+                              <div className="flex flex-col items-center gap-1">
+                                <span className="text-[10px] sm:text-[11px] text-rose-300 font-medium">
                                   Bot Attı
                                 </span>
                                 <PlayingCard
@@ -1838,17 +1958,17 @@ export default function RoyalCasinoApp() {
                             )}
                           </div>
                         ) : (
-                          <p className="text-xs text-slate-500 py-4">
+                          <p className="text-xs text-slate-500 py-2 sm:py-4">
                             Henüz kart atılmadı.
                           </p>
                         )}
                       </div>
 
                       {/* Center Pile with Throw & Sweep Animations */}
-                      <div className="flex flex-col items-center justify-center">
-                        <div className="mb-2 text-center">
+                      <div className="order-1 md:order-2 flex flex-col items-center justify-center">
+                        <div className="mb-1.5 sm:mb-2 text-center">
                           {visibleBoard.length === 1 ? (
-                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-400/20 border border-amber-400/60 text-amber-300 text-xs font-extrabold tracking-wide animate-pulse">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-400/20 border border-amber-400/60 text-amber-300 text-[11px] sm:text-xs font-extrabold tracking-wide animate-pulse">
                               🔥 TEK KART — PİŞTİ FIRSATI! (+10p)
                             </span>
                           ) : (
@@ -1857,9 +1977,9 @@ export default function RoyalCasinoApp() {
                             </span>
                           )}
                         </div>
-                        <div className="relative min-w-[180px] h-44 flex items-center justify-center px-4">
+                        <div className="relative min-w-[160px] h-28 sm:h-44 flex items-center justify-center px-3">
                           {visibleBoard.length === 0 ? (
-                            <div className="w-24 h-36 rounded-xl border-2 border-dashed border-emerald-500/40 flex items-center justify-center text-xs text-emerald-300/60">
+                            <div className="w-16 h-24 sm:w-24 sm:h-36 rounded-xl border-2 border-dashed border-emerald-500/40 flex items-center justify-center text-xs text-emerald-300/60">
                               Yer Boş
                             </div>
                           ) : (
@@ -1869,7 +1989,7 @@ export default function RoyalCasinoApp() {
                                   ? `${pistiAnim.phase}-${visibleBoard.length}`
                                   : `board-${visibleBoard.length}`
                               }
-                              className={`relative flex items-center justify-center -space-x-11 ${
+                              className={`relative flex items-center justify-center -space-x-9 sm:-space-x-11 ${
                                 pistiAnim ? pistiAnim.boardAnimClass : ""
                               }`}
                             >
@@ -1906,21 +2026,21 @@ export default function RoyalCasinoApp() {
                       </div>
 
                       {/* Status & Legend */}
-                      <div className="rounded-2xl bg-slate-950/60 border border-white/10 p-4 text-center space-y-2">
+                      <div className="order-3 rounded-2xl bg-slate-950/60 border border-white/10 p-3 sm:p-4 text-center space-y-1.5 sm:space-y-2">
                         <div
                           key={
                             pistiAnim?.bannerText || pistiGame.gameMessage
                           }
-                          className="text-sm font-bold text-amber-300 animate-pop-banner"
+                          className="text-xs sm:text-sm font-bold text-amber-300 animate-pop-banner"
                         >
                           {pistiAnim?.bannerText || pistiGame.gameMessage}
                         </div>
-                        <div className="text-xs text-slate-400">
+                        <div className="text-[11px] sm:text-xs text-slate-400">
                           🌟{" "}
                           <strong className="text-amber-300">Altın Kart:</strong>{" "}
                           Vale (J) — Yeri Toplar
                         </div>
-                        <div className="text-xs text-slate-400">
+                        <div className="text-[11px] sm:text-xs text-slate-400">
                           🥈{" "}
                           <strong className="text-slate-200">Gümüş Kart:</strong>{" "}
                           ♦10 (3p), ♣2 (2p), As (1p)
@@ -1930,20 +2050,20 @@ export default function RoyalCasinoApp() {
 
                     {/* Player Hand */}
                     <div className="text-center">
-                      <div className="flex flex-wrap items-center justify-center gap-3 mb-4 text-xs sm:text-sm">
-                        <span className="px-3.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 font-bold">
+                      <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-3 mb-3 sm:mb-4 text-[11px] sm:text-sm">
+                        <span className="px-2.5 py-0.5 sm:px-3.5 sm:py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 font-bold">
                           Sizin Puanınız: {pistiGame.playerScore}
                         </span>
-                        <span className="px-3.5 py-1 rounded-full bg-amber-500/20 text-amber-300 font-bold">
+                        <span className="px-2.5 py-0.5 sm:px-3.5 sm:py-1 rounded-full bg-amber-500/20 text-amber-300 font-bold">
                           Pişti: {pistiGame.playerPistiCount}
                         </span>
-                        <span className="px-3.5 py-1 rounded-full bg-slate-900 text-slate-300">
-                          Toplanan: {pistiGame.playerCaptured.length} Kart
+                        <span className="px-2.5 py-0.5 sm:px-3.5 sm:py-1 rounded-full bg-slate-900 text-slate-300">
+                          Kart: {pistiGame.playerCaptured.length}
                         </span>
                       </div>
 
                       {!pistiGame.isGameOver ? (
-                        <div className="flex justify-center flex-wrap gap-3 sm:gap-4 min-h-[160px]">
+                        <div className="flex justify-center flex-wrap gap-2 sm:gap-4 min-h-[112px] sm:min-h-[160px]">
                           {visiblePlayerHand.map((c, idx) => (
                             <PlayingCard
                               key={`${pistiRoundDealKey}-${c}`}
@@ -1958,11 +2078,11 @@ export default function RoyalCasinoApp() {
                           ))}
                         </div>
                       ) : (
-                        <div className="rounded-2xl bg-slate-950/90 border border-amber-400/50 p-6 max-w-xl mx-auto space-y-4 animate-pop-banner">
-                          <h4 className="font-display text-2xl font-bold text-amber-300">
+                        <div className="rounded-2xl bg-slate-950/90 border border-amber-400/50 p-4 sm:p-6 max-w-xl mx-auto space-y-3.5 sm:space-y-4 animate-pop-banner">
+                          <h4 className="font-display text-lg sm:text-2xl font-bold text-amber-300">
                             {pistiGame.gameMessage}
                           </h4>
-                          <p className="text-sm text-slate-300">
+                          <p className="text-xs sm:text-sm text-slate-300">
                             Siz: <strong>{pistiGame.playerScore} Puan</strong> (
                             {pistiGame.playerCaptured.length} kart,{" "}
                             {pistiGame.playerPistiCount} pişti) — Bilgisayar:{" "}
@@ -1970,7 +2090,7 @@ export default function RoyalCasinoApp() {
                             {pistiGame.dealerCaptured.length} kart,{" "}
                             {pistiGame.dealerPistiCount} pişti)
                           </p>
-                          <div className="text-sm font-semibold">
+                          <div className="text-xs sm:text-sm font-semibold">
                             {pistiGame.chipChange > 0 ? (
                               <span className="text-emerald-400">
                                 🎉 +{pistiGame.chipChange} Çip Kazandınız! •
@@ -1996,11 +2116,11 @@ export default function RoyalCasinoApp() {
                               </span>
                             )}
                           </div>
-                          <div className="flex flex-wrap justify-center gap-3 pt-2">
+                          <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-2.5 sm:gap-3 pt-1 sm:pt-2">
                             <button
                               type="button"
                               onClick={handleStartPisti}
-                              className="px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm transition cursor-pointer"
+                              className="w-full sm:w-auto justify-center px-5 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs sm:text-sm transition cursor-pointer"
                             >
                               Tekrar Oyna ({betInput} Çip)
                             </button>
@@ -2016,7 +2136,7 @@ export default function RoyalCasinoApp() {
                                     : `Masadan ayrıldınız. Güncel Bakiye: ${profile.chips.toLocaleString("tr-TR")} Çip`
                                 );
                               }}
-                              className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm flex items-center gap-2 transition cursor-pointer"
+                              className="w-full sm:w-auto justify-center px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer"
                             >
                               <Coins className="w-4 h-4" />
                               {pistiGame.chipChange > 0
@@ -2026,7 +2146,7 @@ export default function RoyalCasinoApp() {
                             <button
                               type="button"
                               onClick={() => setPistiGame(null)}
-                              className="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm transition cursor-pointer"
+                              className="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs sm:text-sm transition cursor-pointer"
                             >
                               Bahis Değiştir
                             </button>
@@ -2047,38 +2167,38 @@ export default function RoyalCasinoApp() {
         {activeTab === "online" && (
           <div className="max-w-5xl mx-auto">
             {!currentRoom ? (
-              <div className="space-y-8">
+              <div className="space-y-5 sm:space-y-8">
                 <div>
-                  <h2 className="font-display text-2xl sm:text-3xl font-bold text-emerald-300">
+                  <h2 className="font-display text-xl sm:text-3xl font-bold text-emerald-300">
                     Canlı Multiplayer Lobi
                   </h2>
-                  <p className="text-sm text-slate-300">
+                  <p className="text-xs sm:text-sm text-slate-300">
                     Oda kurup arkadaşlarınıza oda kodunu gönderin veya açık
                     masalara hemen katılın!
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   {/* Create Room Card */}
-                  <div className="rounded-3xl bg-slate-950/80 border border-emerald-500/30 p-6 shadow-xl space-y-5">
+                  <div className="rounded-3xl bg-slate-950/80 border border-emerald-500/30 p-4 sm:p-6 shadow-xl space-y-4 sm:space-y-5">
                     <div className="flex items-center gap-3">
-                      <Plus className="w-6 h-6 text-emerald-400" />
-                      <h3 className="font-display text-xl font-bold text-white">
+                      <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
+                      <h3 className="font-display text-lg sm:text-xl font-bold text-white">
                         Yeni Online Masa Kur
                       </h3>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <button
                         type="button"
                         onClick={() => setNewRoomGameType("pisti")}
-                        className={`p-3.5 rounded-2xl border text-left transition cursor-pointer ${
+                        className={`p-3 rounded-2xl border text-left transition cursor-pointer ${
                           newRoomGameType === "pisti"
                             ? "bg-emerald-500/20 border-emerald-400 text-white"
                             : "bg-slate-900 border-slate-800 text-slate-400"
                         }`}
                       >
-                        <div className="font-bold text-sm">🃏 Pişti (1v1)</div>
+                        <div className="font-bold text-xs sm:text-sm">🃏 Pişti (1v1)</div>
                         <div className="text-[11px] opacity-75">
                           2 Kişilik Düello
                         </div>
@@ -2087,13 +2207,13 @@ export default function RoyalCasinoApp() {
                       <button
                         type="button"
                         onClick={() => setNewRoomGameType("pisti_2v2")}
-                        className={`p-3.5 rounded-2xl border text-left transition cursor-pointer ${
+                        className={`p-3 rounded-2xl border text-left transition cursor-pointer ${
                           newRoomGameType === "pisti_2v2"
                             ? "bg-amber-500/25 border-amber-400 text-white shadow-lg shadow-amber-500/10"
                             : "bg-slate-900 border-slate-800 text-slate-400"
                         }`}
                       >
-                        <div className="font-bold text-sm">
+                        <div className="font-bold text-xs sm:text-sm">
                           🤝 Eşli Pişti (2v2)
                         </div>
                         <div className="text-[11px] opacity-75">
@@ -2104,13 +2224,13 @@ export default function RoyalCasinoApp() {
                       <button
                         type="button"
                         onClick={() => setNewRoomGameType("blackjack")}
-                        className={`p-3.5 rounded-2xl border text-left transition cursor-pointer ${
+                        className={`p-3 rounded-2xl border text-left transition cursor-pointer ${
                           newRoomGameType === "blackjack"
                             ? "bg-amber-500/20 border-amber-400 text-white"
                             : "bg-slate-900 border-slate-800 text-slate-400"
                         }`}
                       >
-                        <div className="font-bold text-sm">♠️ Blackjack</div>
+                        <div className="font-bold text-xs sm:text-sm">♠️ Blackjack</div>
                         <div className="text-[11px] opacity-75">
                           1-4 Kişilik Masa
                         </div>
@@ -2140,7 +2260,7 @@ export default function RoyalCasinoApp() {
                             key={b}
                             type="button"
                             onClick={() => setNewRoomBet(b)}
-                            className={`flex-1 py-2 rounded-xl font-mono-num text-sm font-bold border transition cursor-pointer ${
+                            className={`flex-1 py-2 rounded-xl font-mono-num text-xs sm:text-sm font-bold border transition cursor-pointer ${
                               newRoomBet === b
                                 ? "bg-amber-400 text-slate-950 border-amber-300"
                                 : "bg-slate-900 text-slate-300 border-slate-700"
@@ -2155,19 +2275,19 @@ export default function RoyalCasinoApp() {
                     <button
                       type="button"
                       onClick={handleCreateRoom}
-                      className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 font-bold text-base shadow-lg hover:brightness-110 transition cursor-pointer"
+                      className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 font-bold text-sm sm:text-base shadow-lg hover:brightness-110 transition cursor-pointer"
                     >
                       Odayı Oluştur & Davet Kodu Al
                     </button>
                   </div>
 
                   {/* Join by Code & Active Rooms */}
-                  <div className="rounded-3xl bg-slate-950/80 border border-amber-500/30 p-6 shadow-xl flex flex-col justify-between space-y-6">
+                  <div className="rounded-3xl bg-slate-950/80 border border-amber-500/30 p-4 sm:p-6 shadow-xl flex flex-col justify-between space-y-5 sm:space-y-6">
                     <div>
-                      <h3 className="font-display text-xl font-bold text-white mb-2">
+                      <h3 className="font-display text-lg sm:text-xl font-bold text-white mb-1.5 sm:mb-2">
                         Oda Kodu İle Katıl
                       </h3>
-                      <p className="text-xs text-slate-400 mb-4">
+                      <p className="text-xs text-slate-400 mb-3 sm:mb-4">
                         Arkadaşınızın paylaştığı 6 haneli kodu (Örn: PS4821)
                         girin:
                       </p>
@@ -2179,12 +2299,12 @@ export default function RoyalCasinoApp() {
                             setRoomCodeInput(e.target.value.toUpperCase())
                           }
                           placeholder="ODA KODU (Örn: PS1234)"
-                          className="flex-1 px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 font-mono-num text-base font-bold uppercase tracking-widest text-amber-300 focus:outline-none focus:border-amber-400"
+                          className="flex-1 min-w-0 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl bg-slate-900 border border-slate-700 font-mono-num text-sm sm:text-base font-bold uppercase tracking-widest text-amber-300 focus:outline-none focus:border-amber-400"
                         />
                         <button
                           type="button"
                           onClick={() => handleJoinRoom(roomCodeInput)}
-                          className="px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold transition cursor-pointer"
+                          className="px-5 py-2.5 sm:px-6 sm:py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-sm sm:text-base font-bold transition cursor-pointer shrink-0"
                         >
                           Katıl
                         </button>
@@ -2206,40 +2326,38 @@ export default function RoyalCasinoApp() {
                       </div>
 
                       {rooms.length === 0 ? (
-                        <div className="rounded-2xl border border-dashed border-slate-800 p-6 text-center text-xs text-slate-500">
-                          Şu an bekleyen açık masa yok. Soldan ilk masayı siz
-                          kurun!
+                        <div className="rounded-2xl border border-dashed border-slate-800 p-5 sm:p-6 text-center text-xs text-slate-500">
+                          Şu an bekleyen açık masa yok. İlk masayı siz kurun!
                         </div>
                       ) : (
                         <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
                           {rooms.map((r) => (
                             <div
                               key={r.code}
-                              className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-emerald-500/40 transition"
+                              className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 p-3 sm:p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-emerald-500/40 transition"
                             >
-                              <div>
+                              <div className="min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-bold text-sm text-white">
+                                  <span className="font-bold text-xs sm:text-sm text-white truncate">
                                     {r.name}
                                   </span>
-                                  <span className="px-2 py-0.5 rounded bg-slate-800 font-mono-num text-xs text-amber-300">
+                                  <span className="px-2 py-0.5 rounded bg-slate-800 font-mono-num text-[11px] sm:text-xs text-amber-300 shrink-0">
                                     {r.code}
                                   </span>
                                 </div>
-                                <div className="text-xs text-slate-400 mt-0.5">
+                                <div className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
                                   {r.gameType === "pisti_2v2"
                                     ? "🤝 Pişti 2v2 Eşli"
                                     : r.gameType === "pisti"
                                     ? "🃏 Pişti 1v1"
                                     : "♠️ Blackjack"}{" "}
-                                  • Bahis: {r.betAmount} Çip • Oyuncular:{" "}
-                                  {r.players.length}/{r.maxPlayers}
+                                  • {r.betAmount} Çip • {r.players.length}/{r.maxPlayers} Oyuncu
                                 </div>
                               </div>
                               <button
                                 type="button"
                                 onClick={() => handleJoinRoom(r.code)}
-                                className="px-4 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 text-xs font-bold transition cursor-pointer"
+                                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 text-xs font-bold transition cursor-pointer shrink-0"
                               >
                                 Masaya Geç
                               </button>
@@ -2253,24 +2371,24 @@ export default function RoyalCasinoApp() {
               </div>
             ) : (
               /* INSIDE AN ACTIVE ONLINE ROOM */
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Room Top Bar */}
-                <div className="flex flex-wrap items-center justify-between gap-4 p-4 sm:p-5 rounded-3xl bg-slate-950/90 border border-emerald-500/40">
-                  <div className="flex items-center gap-3">
-                    <div className="px-3.5 py-2 rounded-2xl bg-emerald-500/15 border border-emerald-400/40 font-mono-num font-bold text-lg text-emerald-300">
+                <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 p-3.5 sm:p-5 rounded-3xl bg-slate-950/90 border border-emerald-500/40">
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <div className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl bg-emerald-500/15 border border-emerald-400/40 font-mono-num font-bold text-sm sm:text-lg text-emerald-300 shrink-0">
                       {currentRoom.code}
                     </div>
-                    <div>
-                      <h3 className="font-bold text-lg text-white">
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-sm sm:text-lg text-white truncate">
                         {currentRoom.name}
                       </h3>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-[11px] sm:text-xs text-slate-400">
                         {currentRoom.gameType === "pisti_2v2"
-                          ? "Online 2v2 Eşli (Takımlı) Pişti"
+                          ? "Online 2v2 Eşli Pişti"
                           : currentRoom.gameType === "pisti"
                           ? "Online 1v1 Pişti"
-                          : "Online Çok Oyunculu Blackjack"}{" "}
-                        • Masa Bahsi:{" "}
+                          : "Online Blackjack"}{" "}
+                        • Bahis:{" "}
                         <strong className="text-amber-300">
                           {currentRoom.betAmount} Çip
                         </strong>
@@ -2278,7 +2396,7 @@ export default function RoyalCasinoApp() {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2.5">
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     <button
                       type="button"
                       onClick={() => {
@@ -2286,12 +2404,12 @@ export default function RoyalCasinoApp() {
                         setCopiedCode(true);
                         setTimeout(() => setCopiedCode(false), 2000);
                       }}
-                      className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                      className="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
                     >
                       {copiedCode ? (
-                        <Check className="w-4 h-4 text-emerald-400" />
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
                       ) : (
-                        <Copy className="w-4 h-4 text-amber-300" />
+                        <Copy className="w-3.5 h-3.5 text-amber-300" />
                       )}
                       {copiedCode ? "Kopyalandı!" : "Kodu Kopyala"}
                     </button>
@@ -2300,7 +2418,7 @@ export default function RoyalCasinoApp() {
                       href={`/?join=${currentRoom.code}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-xs font-semibold flex items-center gap-1.5 transition"
+                      className="hidden sm:flex px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-xs font-semibold items-center gap-1.5 transition"
                       title="Aynı bilgisayarda 2. oyuncu olarak test etmek için yeni sekmede açar"
                     >
                       <ExternalLink className="w-4 h-4" />
@@ -2310,9 +2428,9 @@ export default function RoyalCasinoApp() {
                     <button
                       type="button"
                       onClick={handleLeaveRoom}
-                      className="px-3.5 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 text-rose-300 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                      className="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 text-rose-300 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
                     >
-                      <LogOut className="w-4 h-4" />
+                      <LogOut className="w-3.5 h-3.5" />
                       Odadan Ayrıl
                     </button>
                   </div>
@@ -2570,29 +2688,29 @@ export default function RoyalCasinoApp() {
                       .join(" & ");
 
                     return (
-                      <div className="rounded-3xl bg-emerald-950/45 border-2 border-amber-500/30 p-4 sm:p-6 space-y-6">
+                      <div className="rounded-3xl bg-emerald-950/45 border-2 border-amber-500/30 p-3.5 sm:p-6 space-y-4 sm:space-y-6">
                         {/* 2v2 Team Scoreboard Header */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center rounded-2xl bg-slate-950/80 border border-white/10 p-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3 items-center rounded-2xl bg-slate-950/80 border border-white/10 p-3 sm:p-4">
                           <div
-                            className={`rounded-xl p-3 border ${
+                            className={`order-1 rounded-xl p-2.5 sm:p-3 border ${
                               me.team === "A"
                                 ? "bg-amber-500/15 border-amber-400/50"
                                 : "bg-slate-900/70 border-white/10"
                             }`}
                           >
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-extrabold text-amber-300">
-                                🅰️ ALTIN TAKIM{" "}
-                                {me.team === "A" ? "(SİZİN TAKIM)" : ""}
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="text-[10px] sm:text-xs font-extrabold text-amber-300 truncate">
+                                🅰️ ALTIN{" "}
+                                {me.team === "A" ? "(SİZ)" : ""}
                               </span>
-                              <span className="font-mono-num text-lg font-extrabold text-amber-300">
-                                {ps.teamAScore ?? 0} Puan
+                              <span className="font-mono-num text-sm sm:text-lg font-extrabold text-amber-300 shrink-0">
+                                {ps.teamAScore ?? 0}p
                               </span>
                             </div>
-                            <div className="text-[11px] text-slate-300 truncate mt-0.5">
+                            <div className="text-[10px] sm:text-[11px] text-slate-300 truncate mt-0.5">
                               {teamAMembers}
                             </div>
-                            <div className="flex gap-3 mt-1.5 text-[11px] text-slate-400">
+                            <div className="flex flex-wrap gap-2 sm:gap-3 mt-1 text-[10px] sm:text-[11px] text-slate-400">
                               <span>
                                 🔥 Pişti:{" "}
                                 <strong className="text-amber-300">
@@ -2600,21 +2718,21 @@ export default function RoyalCasinoApp() {
                                 </strong>
                               </span>
                               <span>
-                                🃏 Toplanan:{" "}
+                                🃏{" "}
                                 <strong className="text-white">
-                                  {ps.teamACardCount ?? 0} Kart
+                                  {ps.teamACardCount ?? 0}
                                 </strong>
                               </span>
                             </div>
                           </div>
 
-                          <div className="text-center space-y-1">
-                            <div className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                          <div className="col-span-2 md:col-span-1 order-3 md:order-2 text-center space-y-1">
+                            <div className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-slate-400">
                               {ps.roundNumber}. El • Kalan Deste:{" "}
                               {ps.deck.length}
                             </div>
                             <div
-                              className={`inline-block px-4 py-1.5 rounded-full text-xs font-bold ${
+                              className={`inline-block px-3.5 py-1 sm:px-4 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold ${
                                 isMyTurn
                                   ? "bg-emerald-400 text-slate-950 animate-pulse"
                                   : isPartnerTurn
@@ -2635,25 +2753,25 @@ export default function RoyalCasinoApp() {
                           </div>
 
                           <div
-                            className={`rounded-xl p-3 border ${
+                            className={`order-2 md:order-3 rounded-xl p-2.5 sm:p-3 border ${
                               me.team === "B"
                                 ? "bg-emerald-500/15 border-emerald-400/50"
                                 : "bg-slate-900/70 border-white/10"
                             }`}
                           >
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-extrabold text-emerald-300">
-                                🅱️ ZÜMRÜT TAKIM{" "}
-                                {me.team === "B" ? "(SİZİN TAKIM)" : ""}
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="text-[10px] sm:text-xs font-extrabold text-emerald-300 truncate">
+                                🅱️ ZÜMRÜT{" "}
+                                {me.team === "B" ? "(SİZ)" : ""}
                               </span>
-                              <span className="font-mono-num text-lg font-extrabold text-emerald-300">
-                                {ps.teamBScore ?? 0} Puan
+                              <span className="font-mono-num text-sm sm:text-lg font-extrabold text-emerald-300 shrink-0">
+                                {ps.teamBScore ?? 0}p
                               </span>
                             </div>
-                            <div className="text-[11px] text-slate-300 truncate mt-0.5">
+                            <div className="text-[10px] sm:text-[11px] text-slate-300 truncate mt-0.5">
                               {teamBMembers}
                             </div>
-                            <div className="flex gap-3 mt-1.5 text-[11px] text-slate-400">
+                            <div className="flex flex-wrap gap-2 sm:gap-3 mt-1 text-[10px] sm:text-[11px] text-slate-400">
                               <span>
                                 🔥 Pişti:{" "}
                                 <strong className="text-emerald-300">
@@ -2661,9 +2779,9 @@ export default function RoyalCasinoApp() {
                                 </strong>
                               </span>
                               <span>
-                                🃏 Toplanan:{" "}
+                                🃏{" "}
                                 <strong className="text-white">
-                                  {ps.teamBCardCount ?? 0} Kart
+                                  {ps.teamBCardCount ?? 0}
                                 </strong>
                               </span>
                             </div>
@@ -2674,7 +2792,7 @@ export default function RoyalCasinoApp() {
                         {partner && (
                           <div className="flex flex-col items-center">
                             <div
-                              className={`inline-flex flex-wrap items-center justify-center gap-2.5 px-4 py-1.5 rounded-2xl border mb-2.5 text-xs transition ${
+                              className={`inline-flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-2xl border mb-2 text-[11px] sm:text-xs transition ${
                                 ps.turnPlayerId === partner.playerId &&
                                 currentRoom.status === "playing"
                                   ? "bg-amber-500/20 border-amber-400 ring-2 ring-amber-400/50"
@@ -2682,7 +2800,7 @@ export default function RoyalCasinoApp() {
                               }`}
                             >
                               <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-bold text-[10px]">
-                                🤝 ORTAĞINIZ (Takım {partner.team})
+                                🤝 ORTAK ({partner.team})
                               </span>
                               <span className="font-bold text-white">
                                 {partner.avatar} {partner.nickname}
@@ -2692,7 +2810,7 @@ export default function RoyalCasinoApp() {
                                 {partner.captured.length}
                               </span>
                             </div>
-                            <div className="flex justify-center gap-1.5 min-h-[84px]">
+                            <div className="flex justify-center gap-1.5 min-h-[72px] sm:min-h-[84px]">
                               {partner.hand.map((_, idx) => (
                                 <PlayingCard
                                   key={`partner-${ps.roundNumber}-${idx}`}
@@ -2706,29 +2824,29 @@ export default function RoyalCasinoApp() {
                         )}
 
                         {/* Middle Row: Left Opponent — Center Board — Right Opponent */}
-                        <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-4 py-3 border-y border-white/10">
+                        <div className="grid grid-cols-2 lg:grid-cols-12 items-center gap-2.5 sm:gap-4 py-2.5 sm:py-3 border-y border-white/10">
                           {/* Left Opponent */}
-                          <div className="lg:col-span-3 flex flex-col items-center">
+                          <div className="col-span-1 lg:col-span-3 order-1 flex flex-col items-center">
                             {leftOpp && (
                               <div
-                                className={`w-full rounded-2xl p-3.5 text-center border transition ${
+                                className={`w-full rounded-2xl p-2.5 sm:p-3.5 text-center border transition ${
                                   ps.turnPlayerId === leftOpp.playerId &&
                                   currentRoom.status === "playing"
                                     ? "bg-rose-500/15 border-rose-400 ring-2 ring-rose-400/50"
                                     : "bg-slate-950/65 border-white/10"
                                 }`}
                               >
-                                <div className="text-[10px] uppercase font-bold text-rose-300 mb-1">
-                                  ⚔️ Sol Rakip (Takım {leftOpp.team})
+                                <div className="text-[9px] sm:text-[10px] uppercase font-bold text-rose-300 mb-0.5">
+                                  ⚔️ Sol Rakip ({leftOpp.team})
                                 </div>
-                                <div className="font-bold text-sm text-white">
+                                <div className="font-bold text-xs sm:text-sm text-white truncate">
                                   {leftOpp.avatar} {leftOpp.nickname}
                                 </div>
-                                <div className="text-[11px] text-slate-400 mt-0.5 mb-2">
+                                <div className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 mb-1.5">
                                   Pişti: {leftOpp.pistiCount} • Kart:{" "}
                                   {leftOpp.captured.length}
                                 </div>
-                                <div className="flex justify-center -space-x-6 min-h-[76px]">
+                                <div className="flex justify-center -space-x-6 min-h-[68px] sm:min-h-[76px]">
                                   {leftOpp.hand.map((_, idx) => (
                                     <PlayingCard
                                       key={`left-${ps.roundNumber}-${idx}`}
@@ -2742,9 +2860,9 @@ export default function RoyalCasinoApp() {
                           </div>
 
                           {/* Center Pile */}
-                          <div className="lg:col-span-6 flex flex-col items-center justify-center space-y-2.5">
+                          <div className="col-span-2 lg:col-span-6 order-3 lg:order-2 flex flex-col items-center justify-center space-y-2">
                             {ps.lastMove && (
-                              <div className="text-xs text-slate-300 text-center">
+                              <div className="text-[11px] sm:text-xs text-slate-300 text-center">
                                 Son Hamle:{" "}
                                 <strong className="text-amber-300">
                                   {ps.lastMove.byNickname} (Takım{" "}
@@ -2760,7 +2878,7 @@ export default function RoyalCasinoApp() {
 
                             <div className="text-center">
                               {ps.board.length === 1 ? (
-                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-400/20 border border-amber-400/60 text-amber-300 text-xs font-extrabold tracking-wide animate-pulse">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-400/20 border border-amber-400/60 text-amber-300 text-[11px] sm:text-xs font-extrabold tracking-wide animate-pulse">
                                   🔥 TEK KART — PİŞTİ FIRSATI! (+10p)
                                 </span>
                               ) : (
@@ -2770,15 +2888,15 @@ export default function RoyalCasinoApp() {
                               )}
                             </div>
 
-                            <div className="relative min-w-[180px] h-44 flex items-center justify-center px-4">
+                            <div className="relative min-w-[160px] h-28 sm:h-44 flex items-center justify-center px-3">
                               {!centerCard ? (
-                                <div className="w-24 h-36 rounded-xl border-2 border-dashed border-emerald-500/40 flex items-center justify-center text-xs text-emerald-300/60">
+                                <div className="w-16 h-24 sm:w-24 sm:h-36 rounded-xl border-2 border-dashed border-emerald-500/40 flex items-center justify-center text-xs text-emerald-300/60">
                                   Yer Boş
                                 </div>
                               ) : (
                                 <div
                                   key={`${ps.lastMove?.timestamp ?? 0}-${centerCard}`}
-                                  className={`relative flex items-center justify-center -space-x-11 ${
+                                  className={`relative flex items-center justify-center -space-x-9 sm:-space-x-11 ${
                                     onlinePistiAnim
                                       ? onlinePistiAnim.animClass
                                       : ""
@@ -2820,27 +2938,27 @@ export default function RoyalCasinoApp() {
                           </div>
 
                           {/* Right Opponent */}
-                          <div className="lg:col-span-3 flex flex-col items-center">
+                          <div className="col-span-1 lg:col-span-3 order-2 lg:order-3 flex flex-col items-center">
                             {rightOpp && (
                               <div
-                                className={`w-full rounded-2xl p-3.5 text-center border transition ${
+                                className={`w-full rounded-2xl p-2.5 sm:p-3.5 text-center border transition ${
                                   ps.turnPlayerId === rightOpp.playerId &&
                                   currentRoom.status === "playing"
                                     ? "bg-rose-500/15 border-rose-400 ring-2 ring-rose-400/50"
                                     : "bg-slate-950/65 border-white/10"
                                 }`}
                               >
-                                <div className="text-[10px] uppercase font-bold text-rose-300 mb-1">
-                                  ⚔️ Sağ Rakip (Takım {rightOpp.team})
+                                <div className="text-[9px] sm:text-[10px] uppercase font-bold text-rose-300 mb-0.5">
+                                  ⚔️ Sağ Rakip ({rightOpp.team})
                                 </div>
-                                <div className="font-bold text-sm text-white">
+                                <div className="font-bold text-xs sm:text-sm text-white truncate">
                                   {rightOpp.avatar} {rightOpp.nickname}
                                 </div>
-                                <div className="text-[11px] text-slate-400 mt-0.5 mb-2">
+                                <div className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 mb-1.5">
                                   Pişti: {rightOpp.pistiCount} • Kart:{" "}
                                   {rightOpp.captured.length}
                                 </div>
-                                <div className="flex justify-center -space-x-6 min-h-[76px]">
+                                <div className="flex justify-center -space-x-6 min-h-[68px] sm:min-h-[76px]">
                                   {rightOpp.hand.map((_, idx) => (
                                     <PlayingCard
                                       key={`right-${ps.roundNumber}-${idx}`}
@@ -2856,20 +2974,20 @@ export default function RoyalCasinoApp() {
 
                         {/* Bottom Seat: My Hand */}
                         <div className="text-center">
-                          <div className="flex flex-wrap items-center justify-center gap-3 mb-4 text-xs sm:text-sm">
-                            <span className="px-3.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 font-bold">
+                          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-3 mb-3 sm:mb-4 text-[11px] sm:text-sm">
+                            <span className="px-2.5 py-0.5 sm:px-3.5 sm:py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 font-bold">
                               {me.avatar} Siz ({me.nickname} • Takım {me.team})
                             </span>
-                            <span className="px-3.5 py-1 rounded-full bg-amber-500/20 text-amber-300 font-bold">
-                              Bireysel Pişti: {me.pistiCount}
+                            <span className="px-2.5 py-0.5 sm:px-3.5 sm:py-1 rounded-full bg-amber-500/20 text-amber-300 font-bold">
+                              Pişti: {me.pistiCount}
                             </span>
-                            <span className="px-3.5 py-1 rounded-full bg-slate-900 text-slate-300">
-                              Bireysel Toplanan: {me.captured.length} Kart
+                            <span className="px-2.5 py-0.5 sm:px-3.5 sm:py-1 rounded-full bg-slate-900 text-slate-300">
+                              Kart: {me.captured.length}
                             </span>
                           </div>
 
                           {currentRoom.status === "playing" ? (
-                            <div className="flex justify-center flex-wrap gap-3 sm:gap-4 min-h-[160px]">
+                            <div className="flex justify-center flex-wrap gap-2 sm:gap-4 min-h-[112px] sm:min-h-[160px]">
                               {me.hand.map((c, idx) => (
                                 <PlayingCard
                                   key={`2v2-${ps.roundNumber}-${c}`}
@@ -2886,22 +3004,22 @@ export default function RoyalCasinoApp() {
                               ))}
                             </div>
                           ) : (
-                            <div className="space-y-4">
-                              <div className="text-lg font-bold text-amber-300">
+                            <div className="space-y-3.5 sm:space-y-4">
+                              <div className="text-sm sm:text-lg font-bold text-amber-300">
                                 {currentRoom.winnerMessage}
                               </div>
-                              <div className="flex flex-wrap justify-center gap-3">
+                              <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-2.5 sm:gap-3">
                                 <button
                                   type="button"
                                   onClick={() => handleStartOnlineGame(true, true)}
-                                  className="px-7 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold transition cursor-pointer"
+                                  className="w-full sm:w-auto px-6 py-3 sm:py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs sm:text-sm font-bold transition cursor-pointer"
                                 >
                                   🔄 2v2 Rövanş Başlat (Tekrar Oyna)
                                 </button>
                                 <button
                                   type="button"
                                   onClick={handleLeaveRoom}
-                                  className="px-6 py-3.5 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-200 font-bold transition cursor-pointer"
+                                  className="w-full sm:w-auto px-6 py-3 sm:py-3.5 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-200 text-xs sm:text-sm font-bold transition cursor-pointer"
                                 >
                                   💰 Kazancı Alıp Masadan Çık
                                 </button>
@@ -2935,21 +3053,21 @@ export default function RoyalCasinoApp() {
                       null;
 
                     return (
-                      <div className="rounded-3xl bg-emerald-950/45 border-2 border-amber-500/30 p-6 space-y-6">
+                      <div className="rounded-3xl bg-emerald-950/45 border-2 border-amber-500/30 p-3.5 sm:p-6 space-y-4 sm:space-y-6">
                         {/* Opponent Row */}
                         <div className="flex flex-col items-center">
-                          <div className="flex flex-wrap items-center gap-3 mb-3 text-xs sm:text-sm">
-                            <span className="px-3 py-1 rounded-full bg-slate-900 border border-white/10 font-bold">
-                              {opp.avatar} {opp.nickname}: {opp.score} Puan
+                          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-3 mb-2 sm:mb-3 text-[11px] sm:text-sm">
+                            <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-slate-900 border border-white/10 font-bold">
+                              {opp.avatar} {opp.nickname}: {opp.score}p
                             </span>
-                            <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300">
+                            <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-amber-500/20 text-amber-300">
                               Pişti: {opp.pistiCount}
                             </span>
-                            <span className="px-3 py-1 rounded-full bg-slate-900 text-slate-300">
+                            <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-slate-900 text-slate-300">
                               Kart: {opp.captured.length}
                             </span>
                           </div>
-                          <div className="flex justify-center gap-2 min-h-[96px]">
+                          <div className="flex justify-center gap-1.5 sm:gap-2 min-h-[74px] sm:min-h-[96px]">
                             {opp.hand.map((_, idx) => (
                               <PlayingCard
                                 key={`opp-${ps.roundNumber}-${idx}`}
@@ -2963,9 +3081,9 @@ export default function RoyalCasinoApp() {
                         </div>
 
                         {/* Center Board */}
-                        <div className="flex flex-col items-center justify-center py-4 border-y border-white/10 space-y-3">
+                        <div className="flex flex-col items-center justify-center py-3 sm:py-4 border-y border-white/10 space-y-2.5 sm:space-y-3">
                           <div
-                            className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+                            className={`px-3.5 py-1 sm:px-4 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider text-center ${
                               isMyTurn
                                 ? "bg-emerald-400 text-slate-950 animate-pulse"
                                 : "bg-slate-900 text-amber-300"
@@ -2981,7 +3099,7 @@ export default function RoyalCasinoApp() {
                           </div>
 
                           {ps.lastMove && (
-                            <div className="text-xs text-slate-300">
+                            <div className="text-[11px] sm:text-xs text-slate-300 text-center">
                               Son Hamle:{" "}
                               <strong>{ps.lastMove.byNickname}</strong>{" "}
                               {ps.lastMove.madePisti
@@ -2994,7 +3112,7 @@ export default function RoyalCasinoApp() {
 
                           <div className="text-center">
                             {ps.board.length === 1 ? (
-                              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-400/20 border border-amber-400/60 text-amber-300 text-xs font-extrabold tracking-wide animate-pulse">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-400/20 border border-amber-400/60 text-amber-300 text-[11px] sm:text-xs font-extrabold tracking-wide animate-pulse">
                                 🔥 TEK KART — PİŞTİ FIRSATI! (+10p)
                               </span>
                             ) : (
@@ -3004,15 +3122,15 @@ export default function RoyalCasinoApp() {
                             )}
                           </div>
 
-                          <div className="relative min-w-[180px] h-44 flex items-center justify-center px-4">
+                          <div className="relative min-w-[160px] h-28 sm:h-44 flex items-center justify-center px-3">
                             {!centerCard ? (
-                              <div className="w-24 h-36 rounded-xl border-2 border-dashed border-emerald-500/40 flex items-center justify-center text-xs text-emerald-300/60">
+                              <div className="w-16 h-24 sm:w-24 sm:h-36 rounded-xl border-2 border-dashed border-emerald-500/40 flex items-center justify-center text-xs text-emerald-300/60">
                                 Yer Boş
                               </div>
                             ) : (
                               <div
                                 key={`${ps.lastMove?.timestamp ?? 0}-${centerCard}`}
-                                className={`relative flex items-center justify-center -space-x-11 ${
+                                className={`relative flex items-center justify-center -space-x-9 sm:-space-x-11 ${
                                   onlinePistiAnim
                                     ? onlinePistiAnim.animClass
                                     : ""
@@ -3055,20 +3173,20 @@ export default function RoyalCasinoApp() {
 
                         {/* My Hand */}
                         <div className="text-center">
-                          <div className="flex flex-wrap items-center justify-center gap-3 mb-4 text-xs sm:text-sm">
-                            <span className="px-3.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 font-bold">
-                              {me.avatar} Siz ({me.nickname}): {me.score} Puan
+                          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-3 mb-3 sm:mb-4 text-[11px] sm:text-sm">
+                            <span className="px-2.5 py-0.5 sm:px-3.5 sm:py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 font-bold">
+                              {me.avatar} Siz ({me.nickname}): {me.score}p
                             </span>
-                            <span className="px-3.5 py-1 rounded-full bg-amber-500/20 text-amber-300 font-bold">
+                            <span className="px-2.5 py-0.5 sm:px-3.5 sm:py-1 rounded-full bg-amber-500/20 text-amber-300 font-bold">
                               Pişti: {me.pistiCount}
                             </span>
-                            <span className="px-3.5 py-1 rounded-full bg-slate-900 text-slate-300">
-                              Toplanan: {me.captured.length} Kart
+                            <span className="px-2.5 py-0.5 sm:px-3.5 sm:py-1 rounded-full bg-slate-900 text-slate-300">
+                              Kart: {me.captured.length}
                             </span>
                           </div>
 
                           {currentRoom.status === "playing" ? (
-                            <div className="flex justify-center flex-wrap gap-3 sm:gap-4 min-h-[160px]">
+                            <div className="flex justify-center flex-wrap gap-2 sm:gap-4 min-h-[112px] sm:min-h-[160px]">
                               {me.hand.map((c, idx) => (
                                 <PlayingCard
                                   key={`${ps.roundNumber}-${c}`}
@@ -3085,22 +3203,22 @@ export default function RoyalCasinoApp() {
                               ))}
                             </div>
                           ) : (
-                            <div className="space-y-4">
-                              <div className="text-lg font-bold text-amber-300">
+                            <div className="space-y-3.5 sm:space-y-4">
+                              <div className="text-sm sm:text-lg font-bold text-amber-300">
                                 {currentRoom.winnerMessage}
                               </div>
-                              <div className="flex flex-wrap justify-center gap-3">
+                              <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-2.5 sm:gap-3">
                                 <button
                                   type="button"
                                   onClick={() => handleStartOnlineGame(true)}
-                                  className="px-7 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold transition cursor-pointer"
+                                  className="w-full sm:w-auto px-6 py-3 sm:py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs sm:text-sm font-bold transition cursor-pointer"
                                 >
                                   🔄 Rövanş Başlat (Tekrar Oyna)
                                 </button>
                                 <button
                                   type="button"
                                   onClick={handleLeaveRoom}
-                                  className="px-6 py-3.5 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-200 font-bold transition cursor-pointer"
+                                  className="w-full sm:w-auto px-6 py-3 sm:py-3.5 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-200 text-xs sm:text-sm font-bold transition cursor-pointer"
                                 >
                                   💰 Kazancı Alıp Masadan Çık
                                 </button>
@@ -3124,16 +3242,16 @@ export default function RoyalCasinoApp() {
                       activeSeat?.playerId === profile.id;
 
                     return (
-                      <div className="rounded-3xl bg-emerald-950/45 border-2 border-amber-500/30 p-6 space-y-8">
+                      <div className="rounded-3xl bg-emerald-950/45 border-2 border-amber-500/30 p-3.5 sm:p-6 space-y-5 sm:space-y-8">
                         {/* Dealer */}
                         <div className="text-center">
-                          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-950 text-sm font-semibold mb-3">
+                          <div className="inline-flex items-center gap-2 px-3.5 py-1 sm:px-4 sm:py-1.5 rounded-full bg-slate-950 text-xs sm:text-sm font-semibold mb-2.5 sm:mb-3">
                             <span>Kurpiyer</span>
                             <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono-num">
                               {bj.dealerRevealed ? bj.dealerScore : "?"}
                             </span>
                           </div>
-                          <div className="flex justify-center gap-3">
+                          <div className="flex justify-center flex-wrap gap-2 sm:gap-3">
                             {bj.dealerHand.map((c, idx) => {
                               const faceDown = idx === 0 && !bj.dealerRevealed;
                               return (
@@ -3155,7 +3273,7 @@ export default function RoyalCasinoApp() {
                         </div>
 
                         {/* Seats Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                           {bj.seats.map((seat, idx) => {
                             const isCurrent =
                               currentRoom.status === "playing" &&
@@ -3163,21 +3281,21 @@ export default function RoyalCasinoApp() {
                             return (
                               <div
                                 key={seat.playerId}
-                                className={`rounded-2xl p-4 text-center border transition ${
+                                className={`rounded-2xl p-3 sm:p-4 text-center border transition ${
                                   isCurrent
                                     ? "bg-amber-500/15 border-amber-400 shadow-lg"
                                     : "bg-slate-950/50 border-white/10"
                                 }`}
                               >
-                                <div className="flex items-center justify-between mb-3">
-                                  <span className="font-bold text-sm text-white">
+                                <div className="flex items-center justify-between mb-2.5 sm:mb-3">
+                                  <span className="font-bold text-xs sm:text-sm text-white truncate">
                                     {seat.avatar} {seat.nickname}
                                   </span>
-                                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono-num text-xs font-bold">
+                                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono-num text-[11px] sm:text-xs font-bold shrink-0">
                                     Skor: {seat.score} • Bahis: {seat.bet}
                                   </span>
                                 </div>
-                                <div className="flex justify-center flex-wrap gap-2 mb-2">
+                                <div className="flex justify-center flex-wrap gap-1.5 sm:gap-2 mb-2">
                                   {seat.hand.map((c, cIdx) => (
                                     <PlayingCard
                                       key={`${seat.playerId}-${cIdx}-${c}`}
@@ -3202,21 +3320,21 @@ export default function RoyalCasinoApp() {
                         </div>
 
                         {/* Controls */}
-                        <div className="flex justify-center gap-3">
+                        <div className="flex flex-wrap justify-center gap-2.5 sm:gap-3">
                           {currentRoom.status === "playing" ? (
                             isMyTurn ? (
                               <>
                                 <button
                                   type="button"
                                   onClick={() => handleOnlineBjMove("hit")}
-                                  className="px-6 py-3 rounded-xl bg-emerald-500 text-slate-950 font-bold cursor-pointer"
+                                  className="flex-1 sm:flex-initial px-5 py-3 rounded-xl bg-emerald-500 text-slate-950 text-xs sm:text-sm font-bold cursor-pointer"
                                 >
                                   Kart Çek (Hit)
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleOnlineBjMove("stand")}
-                                  className="px-6 py-3 rounded-xl bg-rose-600 text-white font-bold cursor-pointer"
+                                  className="flex-1 sm:flex-initial px-5 py-3 rounded-xl bg-rose-600 text-white text-xs sm:text-sm font-bold cursor-pointer"
                                 >
                                   Dur (Stand)
                                 </button>
@@ -3224,30 +3342,30 @@ export default function RoyalCasinoApp() {
                                   <button
                                     type="button"
                                     onClick={() => handleOnlineBjMove("double")}
-                                    className="px-6 py-3 rounded-xl bg-amber-400 text-slate-950 font-bold cursor-pointer"
+                                    className="w-full sm:w-auto px-5 py-3 rounded-xl bg-amber-400 text-slate-950 text-xs sm:text-sm font-bold cursor-pointer"
                                   >
                                     2x Katla
                                   </button>
                                 )}
                               </>
                             ) : (
-                              <div className="text-sm text-amber-300 animate-pulse">
+                              <div className="text-xs sm:text-sm text-amber-300 animate-pulse">
                                 Sıra {activeSeat?.nickname} oyuncusunda...
                               </div>
                             )
                           ) : (
-                            <div className="flex flex-wrap justify-center gap-3">
+                            <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-2.5 sm:gap-3 w-full sm:w-auto">
                               <button
                                 type="button"
                                 onClick={() => handleStartOnlineGame(true)}
-                                className="px-7 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold transition cursor-pointer"
+                                className="w-full sm:w-auto px-6 py-3 sm:py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs sm:text-sm font-bold transition cursor-pointer"
                               >
                                 🔄 Yeni El Dağıt (Tekrar Oyna)
                               </button>
                               <button
                                 type="button"
                                 onClick={handleLeaveRoom}
-                                className="px-6 py-3.5 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-200 font-bold transition cursor-pointer"
+                                className="w-full sm:w-auto px-6 py-3 sm:py-3.5 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-200 text-xs sm:text-sm font-bold transition cursor-pointer"
                               >
                                 💰 Kazancı Alıp Masadan Çık
                               </button>
@@ -3266,82 +3384,90 @@ export default function RoyalCasinoApp() {
             TAB 4: LEADERBOARD
         ==================================================== */}
         {activeTab === "leaderboard" && (
-          <div className="max-w-4xl mx-auto space-y-6">
+          <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
             <div>
-              <h2 className="font-display text-2xl sm:text-3xl font-bold text-amber-300">
+              <h2 className="font-display text-xl sm:text-3xl font-bold text-amber-300">
                 En Zengin Oyuncular — Liderlik Tablosu
               </h2>
-              <p className="text-sm text-slate-300">
+              <p className="text-xs sm:text-sm text-slate-300">
                 Blackjack ve Pişti masalarında en yüksek çip bakiyesine ulaşan
                 oyuncular
               </p>
             </div>
 
             <div className="rounded-3xl bg-slate-950/85 border border-amber-500/30 overflow-hidden shadow-2xl">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-white/10 text-xs uppercase tracking-wider text-slate-400 bg-slate-900/60">
-                    <th className="py-4 px-5 text-center w-20">Sıra</th>
-                    <th className="py-4 px-5">Oyuncu</th>
-                    <th className="py-4 px-5 text-center">G / M / B</th>
-                    <th className="py-4 px-5 text-right">Toplam Çip</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5 text-sm">
-                  {leaderboard.map((item, idx) => {
-                    const rank = idx + 1;
-                    const isMe = item.id === profile.id;
-                    return (
-                      <tr
-                        key={item.id}
-                        className={`${
-                          isMe ? "bg-amber-500/10" : "hover:bg-white/5"
-                        } transition`}
-                      >
-                        <td className="py-4 px-5 text-center font-bold text-lg">
-                          {rank === 1
-                            ? "🥇"
-                            : rank === 2
-                            ? "🥈"
-                            : rank === 3
-                            ? "🥉"
-                            : rank}
-                        </td>
-                        <td className="py-4 px-5">
-                          <div className="flex items-center gap-3">
-                            <span className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-lg">
-                              {item.avatar}
-                            </span>
-                            <div>
-                              <span className="font-bold text-white">
-                                {item.nickname}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/10 text-[10px] sm:text-xs uppercase tracking-wider text-slate-400 bg-slate-900/60">
+                      <th className="py-3 px-2.5 sm:py-4 sm:px-5 text-center w-12 sm:w-20">
+                        Sıra
+                      </th>
+                      <th className="py-3 px-2.5 sm:py-4 sm:px-5">Oyuncu</th>
+                      <th className="py-3 px-2 sm:py-4 sm:px-5 text-center">
+                        G/M/B
+                      </th>
+                      <th className="py-3 px-3 sm:py-4 sm:px-5 text-right">
+                        Toplam Çip
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 text-xs sm:text-sm">
+                    {leaderboard.map((item, idx) => {
+                      const rank = idx + 1;
+                      const isMe = item.id === profile.id;
+                      return (
+                        <tr
+                          key={item.id}
+                          className={`${
+                            isMe ? "bg-amber-500/10" : "hover:bg-white/5"
+                          } transition`}
+                        >
+                          <td className="py-3 px-2.5 sm:py-4 sm:px-5 text-center font-bold text-base sm:text-lg">
+                            {rank === 1
+                              ? "🥇"
+                              : rank === 2
+                              ? "🥈"
+                              : rank === 3
+                              ? "🥉"
+                              : rank}
+                          </td>
+                          <td className="py-3 px-2.5 sm:py-4 sm:px-5">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-800 flex items-center justify-center text-base sm:text-lg shrink-0">
+                                {item.avatar}
                               </span>
-                              {isMe && (
-                                <span className="ml-2 px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-bold">
-                                  SİZ
+                              <div className="min-w-0">
+                                <span className="font-bold text-white truncate block sm:inline max-w-[110px] sm:max-w-none">
+                                  {item.nickname}
                                 </span>
-                              )}
+                                {isMe && (
+                                  <span className="sm:ml-2 inline-block px-1.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[9px] sm:text-[10px] font-bold">
+                                    SİZ
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-5 text-center font-mono-num text-xs text-slate-300">
-                          <span className="text-emerald-400 font-bold">
-                            {item.wins}G
-                          </span>{" "}
-                          /{" "}
-                          <span className="text-rose-400 font-bold">
-                            {item.losses}M
-                          </span>{" "}
-                          / <span>{item.draws}B</span>
-                        </td>
-                        <td className="py-4 px-5 text-right font-mono-num font-bold text-base text-amber-400">
-                          {item.chips.toLocaleString("tr-TR")} Çip
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          </td>
+                          <td className="py-3 px-2 sm:py-4 sm:px-5 text-center font-mono-num text-[11px] sm:text-xs text-slate-300 whitespace-nowrap">
+                            <span className="text-emerald-400 font-bold">
+                              {item.wins}G
+                            </span>
+                            /
+                            <span className="text-rose-400 font-bold">
+                              {item.losses}M
+                            </span>
+                            /<span>{item.draws}B</span>
+                          </td>
+                          <td className="py-3 px-3 sm:py-4 sm:px-5 text-right font-mono-num font-bold text-xs sm:text-base text-amber-400 whitespace-nowrap">
+                            {item.chips.toLocaleString("tr-TR")} Çip
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
@@ -3350,35 +3476,41 @@ export default function RoyalCasinoApp() {
             TAB 5: PROFILE & GAME HISTORY
         ==================================================== */}
         {activeTab === "profile" && (
-          <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Player Stats Card */}
-            <div className="rounded-3xl bg-slate-950/85 border border-amber-500/30 p-6 text-center space-y-5 self-start">
-              <div className="w-20 h-20 rounded-3xl bg-slate-900 border-2 border-amber-400 flex items-center justify-center text-4xl mx-auto shadow-lg">
+            <div className="rounded-3xl bg-slate-950/85 border border-amber-500/30 p-5 sm:p-6 text-center space-y-4 sm:space-y-5 self-start">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-slate-900 border-2 border-amber-400 flex items-center justify-center text-3xl sm:text-4xl mx-auto shadow-lg">
                 {profile.avatar}
               </div>
               <div>
-                <h3 className="font-display text-2xl font-bold text-white">
+                <h3 className="font-display text-xl sm:text-2xl font-bold text-white">
                   {profile.nickname}
                 </h3>
                 <p className="text-xs text-emerald-400">VIP Kulüp Üyesi</p>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 pt-2">
-                <div className="p-3 rounded-2xl bg-slate-900/90 border border-white/5">
-                  <div className="text-xs text-slate-400">Galibiyet</div>
-                  <div className="font-mono-num text-lg font-bold text-emerald-400">
+              <div className="grid grid-cols-3 gap-2 pt-1 sm:pt-2">
+                <div className="p-2.5 sm:p-3 rounded-2xl bg-slate-900/90 border border-white/5">
+                  <div className="text-[11px] sm:text-xs text-slate-400">
+                    Galibiyet
+                  </div>
+                  <div className="font-mono-num text-base sm:text-lg font-bold text-emerald-400">
                     {profile.wins}
                   </div>
                 </div>
-                <div className="p-3 rounded-2xl bg-slate-900/90 border border-white/5">
-                  <div className="text-xs text-slate-400">Mağlubiyet</div>
-                  <div className="font-mono-num text-lg font-bold text-rose-400">
+                <div className="p-2.5 sm:p-3 rounded-2xl bg-slate-900/90 border border-white/5">
+                  <div className="text-[11px] sm:text-xs text-slate-400">
+                    Mağlubiyet
+                  </div>
+                  <div className="font-mono-num text-base sm:text-lg font-bold text-rose-400">
                     {profile.losses}
                   </div>
                 </div>
-                <div className="p-3 rounded-2xl bg-slate-900/90 border border-white/5">
-                  <div className="text-xs text-slate-400">Berabere</div>
-                  <div className="font-mono-num text-lg font-bold text-slate-300">
+                <div className="p-2.5 sm:p-3 rounded-2xl bg-slate-900/90 border border-white/5">
+                  <div className="text-[11px] sm:text-xs text-slate-400">
+                    Berabere
+                  </div>
+                  <div className="font-mono-num text-base sm:text-lg font-bold text-slate-300">
                     {profile.draws}
                   </div>
                 </div>
@@ -3387,7 +3519,7 @@ export default function RoyalCasinoApp() {
               <button
                 type="button"
                 onClick={() => setShowProfileModal(true)}
-                className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm font-semibold text-white flex items-center justify-center gap-2 transition cursor-pointer"
+                className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs sm:text-sm font-semibold text-white flex items-center justify-center gap-2 transition cursor-pointer"
               >
                 <User className="w-4 h-4" />
                 Rumuz / Avatar Değiştir
@@ -3396,62 +3528,64 @@ export default function RoyalCasinoApp() {
 
             {/* Game History Table */}
             <div className="lg:col-span-2 rounded-3xl bg-slate-950/85 border border-white/10 overflow-hidden shadow-xl">
-              <div className="p-5 border-b border-white/10 flex items-center justify-between">
-                <h3 className="font-display text-lg font-bold text-amber-300 flex items-center gap-2">
-                  <History className="w-5 h-5" />
+              <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between">
+                <h3 className="font-display text-base sm:text-lg font-bold text-amber-300 flex items-center gap-2">
+                  <History className="w-4 h-4 sm:w-5 sm:h-5" />
                   Son Oyun Geçmişi
                 </h3>
                 <span className="text-xs text-slate-400">
-                  Son {profile.history.length} karşılaşma
+                  Son {profile.history.length} el
                 </span>
               </div>
 
               {profile.history.length === 0 ? (
-                <div className="p-12 text-center text-sm text-slate-500">
+                <div className="p-8 sm:p-12 text-center text-xs sm:text-sm text-slate-500">
                   Henüz hiç oyun oynamadınız. Blackjack veya Pişti masasına
                   oturarak ilk elinizi oynayın!
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-sm">
+                  <table className="w-full text-left border-collapse text-xs sm:text-sm">
                     <thead>
-                      <tr className="bg-slate-900/60 text-xs uppercase text-slate-400 border-b border-white/10">
-                        <th className="py-3.5 px-4">Tarih</th>
-                        <th className="py-3.5 px-4">Oyun</th>
-                        <th className="py-3.5 px-4">Bahis</th>
-                        <th className="py-3.5 px-4">Durum</th>
-                        <th className="py-3.5 px-4 text-right">Net Çip</th>
+                      <tr className="bg-slate-900/60 text-[10px] sm:text-xs uppercase text-slate-400 border-b border-white/10">
+                        <th className="py-3 px-2.5 sm:py-3.5 sm:px-4">Tarih</th>
+                        <th className="py-3 px-2.5 sm:py-3.5 sm:px-4">Oyun</th>
+                        <th className="py-3 px-2.5 sm:py-3.5 sm:px-4">Bahis</th>
+                        <th className="py-3 px-2.5 sm:py-3.5 sm:px-4">Durum</th>
+                        <th className="py-3 px-2.5 sm:py-3.5 sm:px-4 text-right">
+                          Net Çip
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                       {profile.history.map((h) => (
                         <tr key={h.id} className="hover:bg-white/5">
-                          <td className="py-3.5 px-4 text-xs text-slate-400 whitespace-nowrap">
+                          <td className="py-3 px-2.5 sm:py-3.5 sm:px-4 text-[11px] sm:text-xs text-slate-400 whitespace-nowrap">
                             {h.playedAt}
                           </td>
-                          <td className="py-3.5 px-4 font-semibold text-white">
+                          <td className="py-3 px-2.5 sm:py-3.5 sm:px-4 font-semibold text-white whitespace-nowrap">
                             {h.gameType}
                           </td>
-                          <td className="py-3.5 px-4 font-mono-num text-slate-300">
+                          <td className="py-3 px-2.5 sm:py-3.5 sm:px-4 font-mono-num text-slate-300 whitespace-nowrap">
                             {h.betAmount}
                           </td>
-                          <td className="py-3.5 px-4">
+                          <td className="py-3 px-2.5 sm:py-3.5 sm:px-4 whitespace-nowrap">
                             {h.outcome === "win" ? (
-                              <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold">
+                              <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] sm:text-xs font-bold">
                                 Kazandı
                               </span>
                             ) : h.outcome === "loss" ? (
-                              <span className="px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-300 text-xs font-bold">
+                              <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-rose-500/20 text-rose-300 text-[10px] sm:text-xs font-bold">
                                 Kaybetti
                               </span>
                             ) : (
-                              <span className="px-2.5 py-1 rounded-full bg-slate-700 text-slate-300 text-xs font-bold">
+                              <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-slate-700 text-slate-300 text-[10px] sm:text-xs font-bold">
                                 Berabere
                               </span>
                             )}
                           </td>
                           <td
-                            className={`py-3.5 px-4 text-right font-mono-num font-bold ${
+                            className={`py-3 px-2.5 sm:py-3.5 sm:px-4 text-right font-mono-num font-bold whitespace-nowrap ${
                               h.chipChange > 0
                                 ? "text-emerald-400"
                                 : h.chipChange < 0
