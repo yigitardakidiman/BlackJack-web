@@ -1,0 +1,178 @@
+@import "tailwindcss";
+
+:root {
+  --felt-dark: #05140f;
+  --felt-mid: #0a291e;
+  --felt-light: #103d2d;
+  --gold-primary: #eab308;
+  --font-display: "Cinzel", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+body {
+  background-color: var(--felt-dark);
+  color: #f8fafc;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono-num {
+  font-family: var(--font-mono);
+}
+
+.casino-felt-bg {
+  background:
+    radial-gradient(circle at 50% 35%, rgba(16, 85, 60, 0.55) 0%, rgba(7, 30, 22, 0.85) 60%, #04100c 100%);
+}
+
+.card-back-pattern {
+  background: repeating-linear-gradient(
+    45deg,
+    #1e293b,
+    #1e293b 8px,
+    #0f172a 8px,
+    #0f172a 16px
+  );
+}
+
+/* Card Dealt from Shoe (Top-Right) */
+@keyframes dealFromShoe {
+  0% {
+    opacity: 0;
+    transform: translate(120px, -90px) scale(0.65) rotate(18deg);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-4px, 3px) scale(1.03) rotate(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+}
+
+.animate-deal {
+  animation: dealFromShoe 0.42s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+/* Dealer Hidden Card 3D Flip Reveal */
+@keyframes flipReveal {
+  0% {
+    transform: perspective(800px) rotateY(90deg) scale(0.92);
+  }
+  60% {
+    transform: perspective(800px) rotateY(-8deg) scale(1.04);
+  }
+  100% {
+    transform: perspective(800px) rotateY(0deg) scale(1);
+  }
+}
+
+.animate-flip-reveal {
+  animation: flipReveal 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Player Throws Card from Bottom Hand to Center Table */
+@keyframes throwFromPlayer {
+  0% {
+    opacity: 0.3;
+    transform: translateY(150px) scale(1.15) rotate(-14deg);
+  }
+  75% {
+    opacity: 1;
+    transform: translateY(-6px) scale(0.98) rotate(4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(-3deg);
+  }
+}
+
+.animate-throw-player {
+  animation: throwFromPlayer 0.44s cubic-bezier(0.2, 0.9, 0.3, 1.1) forwards;
+}
+
+/* Dealer / Opponent Throws Card from Top Hand to Center Table */
+@keyframes throwFromDealer {
+  0% {
+    opacity: 0.3;
+    transform: translateY(-150px) scale(1.15) rotate(14deg);
+  }
+  75% {
+    opacity: 1;
+    transform: translateY(6px) scale(0.98) rotate(-4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(4deg);
+  }
+}
+
+.animate-throw-dealer {
+  animation: throwFromDealer 0.44s cubic-bezier(0.2, 0.9, 0.3, 1.1) forwards;
+}
+
+/* Pile Sweeps Down to Player Capture Stack */
+@keyframes sweepToPlayer {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-12px) scale(1.08) rotate(-6deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(165px) scale(0.35) rotate(16deg);
+  }
+}
+
+.animate-sweep-player {
+  animation: sweepToPlayer 0.65s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Pile Sweeps Up to Dealer/Opponent Capture Stack */
+@keyframes sweepToDealer {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(12px) scale(1.08) rotate(6deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-165px) scale(0.35) rotate(-16deg);
+  }
+}
+
+.animate-sweep-dealer {
+  animation: sweepToDealer 0.65s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Pisti / Capture Pop Banner */
+@keyframes popBanner {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateY(10px);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12) translateY(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-pop-banner {
+  animation: popBanner 0.38s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
